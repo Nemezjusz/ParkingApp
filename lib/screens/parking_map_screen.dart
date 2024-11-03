@@ -4,7 +4,7 @@ import 'package:smart_parking/screens/settings_screen.dart';
 import 'package:smart_parking/widgets/custom_app_bar.dart';
 import 'package:smart_parking/widgets/custom_title.dart';
 import 'package:smart_parking/widgets/your_reservations_section.dart';
-import 'reservation_screen.dart'; // Import nowego ekranu rezerwacji
+import 'reservation_screen.dart';
 import '../widgets/parking_spot_tile.dart';
 
 class ParkingMapScreen extends StatefulWidget {

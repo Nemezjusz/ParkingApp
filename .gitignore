@@ -19,6 +19,12 @@
 # Visual Studio Code related
 .vscode/
 
+# Venv
+venv/
+env/
+backend/venv/
+backend/env/
+
 # Flutter/Dart/Pub related
 **/doc/api/
 .dart_tool/

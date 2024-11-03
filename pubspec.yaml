@@ -37,6 +37,11 @@ dependencies:
       path: packages/flutter_form_bloc
   internet_connection_checker_plus: ^2.5.2
   settings_ui: ^2.0.2
+  flutter_bloc: ^8.0.1
+  http: ^1.2.2
+  jwt_decoder: ^2.0.1
+  shared_preferences: ^2.0.15
+  provider: ^6.0.0
 
 dev_dependencies:
   flutter_test:

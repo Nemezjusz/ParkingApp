@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/constants/constants.dart';
 import 'package:smart_parking/screens/login_screen.dart';
 
-
 void main() {
-  runApp(SmartParkingApp());
+  runApp(
+    BlocProvider(
+      create: (context) => AuthBloc(),
+      child: SmartParkingApp(),
+    ),
+  );
 }
 
 class SmartParkingApp extends StatelessWidget {

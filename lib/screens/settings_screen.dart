@@ -1,11 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:smart_parking/constants/constants.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:smart_parking/blocs/auth_bloc.dart';
+import 'package:smart_parking/blocs/auth_state.dart';
+import 'package:smart_parking/blocs/auth_event.dart';
+import 'package:smart_parking/screens/change_password_screen.dart';
+import 'package:smart_parking/screens/login_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+
+    String username = 'Guest';
+    String email = 'Not available';
+
+    if (authState.isAuthenticated && authState.token != null) {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(authState.token!);
+      username = decodedToken['sub']; // Zakładamy, że 'sub' zawiera nazwę użytkownika
+      // Jeśli email jest w tokenie, możesz go również pobrać
+    }
+
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
@@ -19,7 +37,7 @@ class SettingsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'John Doe',
+                    username,
                     style: Theme.of(context).textTheme.titleLarge!.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -27,7 +45,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'johndoe@example.com',
+                    email,
                     style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                           color: Colors.grey[400],
                         ),
@@ -68,6 +86,18 @@ class SettingsScreen extends StatelessWidget {
                       // Logika powiadomień
                     },
                   ),
+                  SettingsTile(
+                    icon: Icons.lock_outline,
+                    title: 'Change Password',
+                    subtitle: 'Update your password',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ChangePasswordScreen()),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -80,8 +110,14 @@ class SettingsScreen extends StatelessWidget {
                 icon: Icons.exit_to_app,
                 title: 'Logout',
                 subtitle: 'Sign out of your account',
-                onTap: ()  {
-                  // Dodatkowa logika wylogowania
+                onTap: () {
+                  context.read<AuthBloc>().add(LoggedOut());
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => LoginScreen(),
+                    ),
+                  );
                 },
               ),
             ),
