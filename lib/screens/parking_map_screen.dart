@@ -6,7 +6,6 @@ import 'package:smart_parking/widgets/custom_title.dart';
 import 'package:smart_parking/widgets/your_reservations_section.dart';
 import 'reservation_screen.dart'; // Import nowego ekranu rezerwacji
 import '../widgets/parking_spot_tile.dart';
-import '../widgets/reservation_item.dart';
 
 class ParkingMapScreen extends StatefulWidget {
   @override
