@@ -29,7 +29,7 @@ class ChangePasswordFormBloc extends FormBloc<String, String> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/change-password'),
+        Uri.parse('https://pilarz.dev/change-password'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${authState.token}',
