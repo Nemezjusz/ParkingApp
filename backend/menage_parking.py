@@ -1,9 +1,9 @@
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
 from datetime import datetime
 import argparse
-from prettytable import PrettyTable
-from bson import ObjectId
+from prettytable import PrettyTable  # type: ignore
+from bson import ObjectId  # type: ignore
 
 
 MONGO_URL = "mongodb://localhost:27017"

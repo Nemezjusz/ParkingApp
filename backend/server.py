@@ -1,12 +1,12 @@
-from fastapi import FastAPI, HTTPException, Depends, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, Depends, status, Form  # type: ignore
+from fastapi.security import OAuth2PasswordBearer  # type: ignore
+from pydantic import BaseModel  # type: ignore
 from typing import Dict
-from motor.motor_asyncio import AsyncIOMotorClient
-from bson import ObjectId
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
-import jwt
+from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
+from bson import ObjectId  # type: ignore
+from passlib.context import CryptContext  # type: ignore
+from datetime import datetime, timedelta, timezone
+import jwt  # type: ignore
 
 app = FastAPI()
 
@@ -37,7 +37,6 @@ class ParkingSpotStatus(BaseModel):
     status: str  # "occupied" or "free"
 
 class ReservationRequest(BaseModel):
-    username: str
     parking_spot_id: str
     action: str  # "reserve" or "cancel"
 
@@ -56,35 +55,51 @@ def get_password_hash(password):
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-async def get_user_by_username(username: str):
-    return await users_col.find_one({"username": username})
+async def get_user_by_email(email: str):
+    return await users_col.find_one({"email": email})
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Nie udało się zweryfikować poświadczeń",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user = await get_user_by_username(payload.get("sub"))
+        email = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+        user = await get_user_by_email(email)
         if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+            raise credentials_exception
         return user
     except jwt.PyJWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise credentials_exception
+
+class OAuth2PasswordRequestFormEmail:
+    def __init__(
+        self,
+        email: str = Form(...),
+        password: str = Form(...),
+        scope: str = Form(""),
+        client_id: str = Form(None),
+        client_secret: str = Form(None),
+    ):
+        self.email = email
+        self.password = password
+        self.scope = scope
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.scopes = scope.split()
 
 # Authentication
 @app.post("/login", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = await get_user_by_username(form_data.username)
+async def login(form_data: OAuth2PasswordRequestFormEmail = Depends()):
+    user = await get_user_by_email(form_data.email)
     if not user or not verify_password(form_data.password, user["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -92,7 +107,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    access_token = create_access_token(data={"sub": user["username"]})
+    access_token = create_access_token(data={"sub": user["email"]})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/change-password")
@@ -120,7 +135,7 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
     
     update_data = {
         "status": spot_status.status,
-        "last_status_update": datetime.utcnow()
+        "last_status_update": datetime.now(timezone.utc)
     }
     
     if spot_status.status == "occupied":
@@ -137,7 +152,7 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
             await reservations_col.update_one(
                 {"_id": reservation["_id"]},
                 {"$set": {
-                    "confirmation_deadline": datetime.utcnow() + timedelta(minutes=CONFIRMATION_TIMEOUT_MINUTES)
+                    "confirmation_deadline": datetime.now(timezone.utc) + timedelta(minutes=CONFIRMATION_TIMEOUT_MINUTES)
                 }}
             )
         else:
@@ -169,7 +184,7 @@ async def confirm_parking(
     if str(reservation["user_id"]) != str(current_user["_id"]):
         raise HTTPException(status_code=403, detail="You are not authorized to confirm this reservation")
     
-    if datetime.utcnow() > reservation["confirmation_deadline"]:
+    if datetime.now(timezone.utc) > reservation["confirmation_deadline"]:
         await reservations_col.update_one(
             {"_id": reservation["_id"]},
             {"$set": {"active": False, "status": "expired"}}
@@ -198,7 +213,7 @@ async def confirm_parking(
         {"_id": reservation["_id"]},
         {"$set": {
             "status": "confirmed",
-            "confirmation_time": datetime.utcnow()
+            "confirmation_time": datetime.now(timezone.utc)
         }}
     )
     
@@ -221,7 +236,7 @@ async def reserve_parking_spot(
             "user_id": str(current_user["_id"]),
             "parking_spot_id": reservation.parking_spot_id,
             "active": True,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "status": "reserved"
         }
         await reservations_col.insert_one(reservation_doc)
@@ -271,10 +286,9 @@ async def get_parking_status():
             "color": spot.get("color", "GREEN"),
             "waiting_confirmation": spot.get("waiting_confirmation", False)
         }
-            
         spots.append(spot_data)
     return spots
 
 if __name__ == "__main__":
-    import uvicorn
+    import uvicorn  # type: ignore
     uvicorn.run(app, host="0.0.0.0", port=8000)

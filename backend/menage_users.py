@@ -1,10 +1,10 @@
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
-from passlib.context import CryptContext
+from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
+from passlib.context import CryptContext  # type: ignore
 from datetime import datetime
 import argparse
-from prettytable import PrettyTable
-from bson import ObjectId
+from prettytable import PrettyTable  # type: ignore
+from bson import ObjectId  # type: ignore
 
 
 MONGO_URL = "mongodb://localhost:27017"
@@ -18,7 +18,7 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 async def add_user(username: str, email: str, password: str, is_admin: bool = False) -> bool:
-   
+
     existing_user = await users_col.find_one({"username": username})
     if existing_user:
         print(f"Error: User '{username}' already exists")
