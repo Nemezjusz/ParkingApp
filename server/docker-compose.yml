@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   iot_server:
     build:
@@ -9,6 +7,8 @@ services:
       - "8000:8000"
     depends_on:
       - mongodb
+    networks:
+      - iot_network
 
   mongodb:
     image: mongo
@@ -17,6 +17,11 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - iot_network
 
 volumes:
   mongodb_data:
+
+networks:
+  iot_network:

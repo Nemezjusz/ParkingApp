@@ -1,12 +1,12 @@
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
 from datetime import datetime
 import argparse
-from prettytable import PrettyTable
-from bson import ObjectId
+from prettytable import PrettyTable  # type: ignore
+from bson import ObjectId  # type: ignore
 
 
-MONGO_URL = "mongodb://localhost:27017"
+MONGO_URL = "mongodb://mongodb:27017"
 client = AsyncIOMotorClient(MONGO_URL)
 db = client.parking_system
 parking_spots_col = db.parking_spots
@@ -103,5 +103,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
