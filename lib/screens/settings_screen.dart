@@ -3,7 +3,6 @@ import 'package:smart_parking/constants/constants.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:smart_parking/blocs/auth_bloc.dart';
-import 'package:smart_parking/blocs/auth_state.dart';
 import 'package:smart_parking/blocs/auth_event.dart';
 import 'package:smart_parking/screens/change_password_screen.dart';
 import 'package:smart_parking/screens/login_screen.dart';
@@ -20,8 +19,7 @@ class SettingsScreen extends StatelessWidget {
 
     if (authState.isAuthenticated && authState.token != null) {
       Map<String, dynamic> decodedToken = JwtDecoder.decode(authState.token!);
-      username = decodedToken['sub']; // Zakładamy, że 'sub' zawiera nazwę użytkownika
-      // Jeśli email jest w tokenie, możesz go również pobrać
+      username = decodedToken['sub'];
     }
 
     return Scaffold(

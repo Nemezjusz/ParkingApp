@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:smart_parking/blocs/auth_bloc.dart';
-import 'package:smart_parking/blocs/auth_state.dart';
 
 class ChangePasswordFormBloc extends FormBloc<String, String> {
   final TextFieldBloc currentPassword = TextFieldBloc(

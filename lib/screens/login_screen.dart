@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:smart_parking/constants/constants.dart';
 import 'package:smart_parking/screens/parking_map_screen.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/blocs/auth_event.dart';
 import 'package:smart_parking/widgets/dialogs/loading_dialog.dart';
