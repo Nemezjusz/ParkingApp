@@ -7,6 +7,7 @@ import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/blocs/auth_state.dart';
 
 class ReservationItem extends StatelessWidget {
+  final String parkingSpotId;
   final String spot;
   final String status;
   final String date;
@@ -16,6 +17,7 @@ class ReservationItem extends StatelessWidget {
 
   const ReservationItem({
     super.key,
+    required this.parkingSpotId,
     required this.spot,
     required this.status,
     required this.date,
@@ -24,7 +26,7 @@ class ReservationItem extends StatelessWidget {
     required this.color,
   });
 
-  void _cancelReservation(BuildContext context, String parkingSpotId) async {
+  void _cancelReservation(BuildContext context, String parkingSpotId, String date, String startTime, String endTime) async {
     // Pokaż potwierdzenie
     bool? confirm = await showDialog<bool>(
       context: context,
@@ -49,7 +51,7 @@ class ReservationItem extends StatelessWidget {
       try {
         final authState = context.read<AuthBloc>().state;
         if (authState is Authenticated) {
-          await ApiService.cancelReservation(parkingSpotId, authState.token);
+          await ApiService.cancelReservation(parkingSpotId, date, startTime, endTime, authState.token);
           LoadingDialog.hide(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -120,7 +122,7 @@ class ReservationItem extends StatelessWidget {
         ),
         trailing: IconButton(
           icon: const Icon(Icons.cancel, color: Colors.white, size: 30),
-          onPressed: () => _cancelReservation(context, spot),
+          onPressed: () => _cancelReservation(context, parkingSpotId, date, startTime, endTime),
         ),
       ),
     );

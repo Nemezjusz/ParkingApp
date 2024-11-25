@@ -76,7 +76,8 @@ class _YourReservationsSectionState extends State<YourReservationsSection> {
                     DateFormat('dd-MM-yyyy').format(parsedDate);
 
                     return ReservationItem(
-                      spot: reservation.parkingSpotId,
+                      parkingSpotId: reservation.parkingSpotId,
+                      spot: reservation.parkingPrettyId,
                       status: reservation.status,
                       date: formattedDate,
                       startTime: reservation.startTime,
@@ -85,7 +86,8 @@ class _YourReservationsSectionState extends State<YourReservationsSection> {
                     );
                   } catch (e) {
                     return ReservationItem(
-                      spot: reservation.parkingSpotId,
+                      parkingSpotId: reservation.parkingSpotId,
+                      spot: reservation.parkingPrettyId,
                       status: reservation.status,
                       date: reservation.date,
                       startTime: reservation.startTime,
