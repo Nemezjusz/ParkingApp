@@ -7,6 +7,8 @@ from bson import ObjectId  # type: ignore
 from passlib.context import CryptContext  # type: ignore
 from datetime import datetime, timedelta, timezone
 import jwt  # type: ignore
+from datetime import date, time  # type: ignore
+from typing import Optional  # type: ignore
 
 app = FastAPI()
 
@@ -39,6 +41,9 @@ class ParkingSpotStatus(BaseModel):
 class ReservationRequest(BaseModel):
     parking_spot_id: str
     action: str  # "reserve" or "cancel"
+    reservation_date: date
+    reservation_start_time: Optional[time] = None
+    reservation_end_time: Optional[time] = None
 
 class ParkingConfirmation(BaseModel):
     parking_spot_id: str
@@ -227,17 +232,44 @@ async def reserve_parking_spot(
     parking_spot = await parking_spots_col.find_one({"_id": ObjectId(reservation.parking_spot_id)})
     if not parking_spot:
         raise HTTPException(status_code=404, detail="Parking spot not found")
-    
+
     if reservation.action == "reserve":
         if parking_spot["status"] != "free":
             raise HTTPException(status_code=400, detail="Parking spot is not free")
+
+        # Sprawdzenie czy godziny są poprawne
+        if not reservation.start_time or not reservation.end_time:
+            raise HTTPException(status_code=400, detail="Start time and end time are required for reservation")
         
+        if reservation.start_time >= reservation.end_time:
+            raise HTTPException(status_code=400, detail="Start time must be before end time")
+        
+        # Sprawdzenie, czy istnieją już rezerwacje w tym samym czasie
+        existing_reservation = await reservations_col.find_one({
+            "parking_spot_id": reservation.parking_spot_id,
+            "reservation_date": reservation.reservation_date,
+            "active": True,
+            "$or": [
+                {
+                    "start_time": {"$lt": reservation.end_time},
+                    "end_time": {"$gt": reservation.start_time}
+                }
+            ]
+        })
+        
+        if existing_reservation:
+            raise HTTPException(status_code=400, detail="Parking spot is already reserved for the selected time")
+        
+        # Tworzenie dokumentu rezerwacji z datą i godzinami
         reservation_doc = {
             "user_id": str(current_user["_id"]),
             "parking_spot_id": reservation.parking_spot_id,
             "active": True,
             "created_at": datetime.now(timezone.utc),
-            "status": "reserved"
+            "status": "reserved",
+            "reservation_date": reservation.reservation_date,
+            "start_time": reservation.start_time,
+            "end_time": reservation.end_time
         }
         await reservations_col.insert_one(reservation_doc)
         
@@ -246,7 +278,10 @@ async def reserve_parking_spot(
             {"$set": {
                 "status": "reserved",
                 "color": "YELLOW",
-                "reserved_user_id": str(current_user["_id"])
+                "reserved_user_id": str(current_user["_id"]),
+                "reservation_date": reservation.reservation_date,
+                "start_time": reservation.start_time,
+                "end_time": reservation.end_time
             }}
         )
         return {"message": "Parking spot reserved", "color": "YELLOW"}
@@ -271,7 +306,10 @@ async def reserve_parking_spot(
             {"$set": {
                 "status": "free",
                 "color": "GREEN",
-                "reserved_user_id": None
+                "reserved_user_id": None,
+                "reservation_date": None,
+                "start_time": None,
+                "end_time": None
             }}
         )
         return {"message": "Reservation cancelled", "color": "GREEN"}
