@@ -4,7 +4,7 @@ import 'package:smart_parking/services/api_service.dart';
 import 'package:equatable/equatable.dart';
 import 'package:logger/logger.dart';
 
-// Stany
+// States
 abstract class ParkingSpotState extends Equatable {
   const ParkingSpotState();
 
@@ -34,7 +34,7 @@ class ParkingSpotError extends ParkingSpotState {
   List<Object> get props => [message];
 }
 
-// Zdarzenia
+// Events
 abstract class ParkingSpotEvent extends Equatable {
   const ParkingSpotEvent();
 
