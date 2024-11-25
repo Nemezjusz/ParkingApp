@@ -35,7 +35,7 @@ class PasswordChange(BaseModel):
 class ParkingSpotStatus(BaseModel):
     parking_spot_id: str
     status: str  # "occupied" or "free"
-
+    pretty_id: str
 class ReservationRequest(BaseModel):
     parking_spot_id: str
     action: str  # "reserve" or "cancel"
