@@ -354,8 +354,11 @@ async def get_parking_status():
     async for spot in parking_spots_col.find():
         spot_data = {
             "id": str(spot["_id"]),
+            "pretty_id": spot.get("pretty_id", "N/A"),
             "status": spot["status"],
             "color": spot.get("color", "GREEN"),
+            "floor": spot.get("floor", "unknown"),
+            "spot_number": spot.get("spot_number", "unknown"),
             "waiting_confirmation": spot.get("waiting_confirmation", False)
         }
         spots.append(spot_data)

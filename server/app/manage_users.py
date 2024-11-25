@@ -1,12 +1,14 @@
+import asyncio
+from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
+from passlib.context import CryptContext  # type: ignore
 from datetime import datetime
 import argparse
-import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
-from passlib.context import CryptContext
-from prettytable import PrettyTable
+from prettytable import PrettyTable  # type: ignore
+from bson import ObjectId  # type: ignore
 
-# MongoDB connection
-client = AsyncIOMotorClient("mongodb://localhost:27017")
+
+MONGO_URL = "mongodb://mongodb:27017"
+client = AsyncIOMotorClient(MONGO_URL)
 db = client.parking_system
 users_col = db.users
 

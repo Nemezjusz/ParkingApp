@@ -7,7 +7,6 @@ import 'package:smart_parking/blocs/reservation_form_bloc.dart';
 import 'package:smart_parking/blocs/parking_spot_bloc.dart';
 import 'package:smart_parking/models/parking_spot.dart';
 import 'package:dropdown_search/dropdown_search.dart';
-import 'package:intl/intl.dart';
 
 class ReservationForm extends StatelessWidget {
   const ReservationForm({super.key});
@@ -38,10 +37,10 @@ class ReservationForm extends StatelessWidget {
               }
               return DropdownSearch<ParkingSpot>(
                 items: freeSpots,
-                itemAsString: (ParkingSpot spot) => "Miejsce ${spot.id}",
+                itemAsString: (ParkingSpot spot) => spot.prettyId, // Użyj prettyId
                 onChanged: (ParkingSpot? selectedSpot) {
                   if (selectedSpot != null) {
-                    reservationFormBloc.parkingSpotId.updateValue(selectedSpot.id);
+                    reservationFormBloc.parkingSpotId.updateValue(selectedSpot.id); // Użyj ID jako wartości
                   }
                 },
                 selectedItem: freeSpots.first,
@@ -91,7 +90,7 @@ class ReservationForm extends StatelessWidget {
             ),
             child: Text(
               reservationFormBloc.reservationDate.value != null
-                  ? DateFormat('yyyy-MM-dd').format(reservationFormBloc.reservationDate.value)
+                  ? DateFormat('yyyy-MM-dd').format(reservationFormBloc.reservationDate.value!)
                   : 'Wybierz datę',
               style: TextStyle(
                 color: reservationFormBloc.reservationDate.value != null ? Colors.black : Colors.grey,

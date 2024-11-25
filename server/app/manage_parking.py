@@ -1,12 +1,14 @@
-import argparse
-from datetime import datetime
-from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
-from prettytable import PrettyTable  # type: ignore
-import string
 import asyncio
+from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
+from datetime import datetime
+import argparse
+from prettytable import PrettyTable  # type: ignore
+from bson import ObjectId  # type: ignore
+import string
 
-# MongoDB connection
-client = AsyncIOMotorClient("mongodb://localhost:27017")
+
+MONGO_URL = "mongodb://mongodb:27017"
+client = AsyncIOMotorClient(MONGO_URL)
 db = client.parking_system
 parking_spots_col = db.parking_spots
 

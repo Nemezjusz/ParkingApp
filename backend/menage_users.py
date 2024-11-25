@@ -1,9 +1,9 @@
 from datetime import datetime
 import argparse
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
-from passlib.context import CryptContext
-from prettytable import PrettyTable
+from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
+from passlib.context import CryptContext  # type: ignore
+from prettytable import PrettyTable  # type: ignore
 
 # MongoDB connection
 client = AsyncIOMotorClient("mongodb://localhost:27017")
