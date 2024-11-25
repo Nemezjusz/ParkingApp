@@ -1,7 +1,7 @@
 import argparse
 from datetime import datetime
-from motor.motor_asyncio import AsyncIOMotorClient
-from prettytable import PrettyTable
+from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
+from prettytable import PrettyTable  # type: ignore
 import string
 import asyncio
 

@@ -1,12 +1,12 @@
 from fastapi import FastAPI, HTTPException, Depends, status, Form  # type: ignore
 from fastapi.security import OAuth2PasswordBearer  # type: ignore
 from pydantic import BaseModel, Field, validator  # type: ignore
+from typing import Dict
 from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
 from bson import ObjectId  # type: ignore
 from passlib.context import CryptContext  # type: ignore
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date, time
 import jwt  # type: ignore
-from datetime import date, time  # type: ignore
 
 app = FastAPI()
 
@@ -35,6 +35,7 @@ class PasswordChange(BaseModel):
 class ParkingSpotStatus(BaseModel):
     parking_spot_id: str
     status: str  # "occupied" or "free"
+    pretty_id: str
 
 class ReservationRequest(BaseModel):
     parking_spot_id: str
