@@ -2,36 +2,100 @@ import 'package:flutter/material.dart';
 import 'package:smart_parking/constants/constants.dart';
 import 'package:smart_parking/widgets/custom_title.dart';
 import 'reservation_item.dart';
+import 'package:smart_parking/services/api_service.dart';
+import 'package:smart_parking/models/reservation.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_parking/blocs/auth_bloc.dart';
+import 'package:smart_parking/blocs/auth_state.dart';
 
-class YourReservationsSection extends StatelessWidget {
-  const YourReservationsSection({Key? key}) : super(key: key);
+class YourReservationsSection extends StatefulWidget {
+  const YourReservationsSection({super.key});
+
+  @override
+  _YourReservationsSectionState createState() => _YourReservationsSectionState();
+}
+
+class _YourReservationsSectionState extends State<YourReservationsSection> {
+  late Future<List<Reservation>> reservations;
+
+  @override
+  void initState() {
+    super.initState();
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      // Użycie fetchUserReservations z konwersją danych do modelu Reservation
+      reservations = ApiService.fetchUserReservations(authState.token).then(
+        (data) => data.map((json) => Reservation.fromJson(json)).toList(),
+      );
+    } else {
+      reservations = Future.value([]);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CustomTitle(icon: Icons.calendar_today, title: 'Your Parking Reservations'),
-        
-        ListView(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          children: const [
-            ReservationItem(
-              spot: 'A1',
-              status: 'Reserved',
-              time: '10:00 - 12:00',
-              color: parkingSpotReserved,
-            ),
-            ReservationItem(
-              spot: 'B2',
-              status: 'Occupied',
-              time: '14:00 - 16:00',
-              color: parkingSpotOccupied,
-            ),
-          ],
+        const CustomTitle(
+          icon: Icons.calendar_today,
+          title: 'Twoje Rezerwacje',
+        ),
+        const SizedBox(height: 10),
+        FutureBuilder<List<Reservation>>(
+          future: reservations,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Wystąpił błąd podczas ładowania rezerwacji.',
+                  style: GoogleFonts.poppins(color: Colors.red),
+                ),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Text(
+                  'Brak zarejestrowanych rezerwacji.',
+                  style: GoogleFonts.poppins(color: Colors.grey),
+                ),
+              );
+            } else {
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  final reservation = snapshot.data![index];
+                  return ReservationItem(
+                    spot: reservation.parkingSpotId,
+                    status: reservation.status,
+                    date: reservation.date,
+                    startTime: reservation.startTime,
+                    endTime: reservation.endTime,
+                    color: _getColorByStatus(reservation.status),
+                  );
+                },
+              );
+            }
+          },
         ),
       ],
     );
+  }
+
+  Color _getColorByStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'reserved':
+        return parkingSpotReserved;
+      case 'occupied':
+        return parkingSpotOccupied;
+      case 'confirmed':
+        return parkingSpotConfirmed;
+      default:
+        return parkingSpotFree;
+    }
   }
 }

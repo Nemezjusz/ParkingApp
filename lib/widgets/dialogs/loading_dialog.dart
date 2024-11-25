@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
-
-/// A dialog widget that displays a loading indicator.
-///
-/// This dialog is typically used to indicate that a process is ongoing and the user should wait.
-/// It displays a circular progress indicator inside a card.
-///
 class LoadingDialog extends StatelessWidget {
   static void show(BuildContext context, {Key? key}) => showDialog<void>(
         context: context,
@@ -14,13 +9,13 @@ class LoadingDialog extends StatelessWidget {
         builder: (_) => LoadingDialog(key: key),
       ).then((_) => FocusScope.of(context).requestFocus(FocusNode()));
 
- static void hide(BuildContext context) {
+  static void hide(BuildContext context) {
     if (Navigator.of(context).canPop()) {
-      Navigator.of(context).pop(); // Dismiss the dialog if it's still active
+      Navigator.of(context).pop();
     }
   }
 
-  const LoadingDialog({Key? key}) : super(key: key);
+  const LoadingDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,11 +23,23 @@ class LoadingDialog extends StatelessWidget {
       onWillPop: () async => false,
       child: Center(
         child: Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
-            width: 80,
-            height: 80,
-            padding: const EdgeInsets.all(12.0),
-            child: const CircularProgressIndicator(),
+            width: 150,
+            height: 150,
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Dodanie animacji Lottie
+                Lottie.asset('assets/animations/car-loading.json', width: 180, height: 180, repeat: true),
+                const SizedBox(height: 20),
+                const Text(
+                  'Proszę czekać...',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,39 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:smart_parking/constants/constants.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CustomTitle extends StatelessWidget {
   final IconData icon;
   final String title;
 
-  const CustomTitle({
-    Key? key,
-    required this.icon,
-    required this.title,
-  }) : super(key: key);
+  const CustomTitle({super.key, required this.icon, required this.title});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 4),
-          child: Row(
-            children: [
-              Icon(icon, color: iconAccentColor),
-              SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+        Icon(icon, color: Colors.blueAccent),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
           ),
         ),
-        const Divider(color: dividerColor),
       ],
     );
   }

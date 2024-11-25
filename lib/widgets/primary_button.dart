@@ -1,34 +1,39 @@
-import '../../constants/constants.dart';
 import 'package:flutter/material.dart';
 
-
 class PrimaryButton extends StatelessWidget {
+  final String text;
+  final VoidCallback press;
+  final Color? color;
+  final Color textColor;
+  final BorderRadius borderRadius;
+  final double elevation;
+
   const PrimaryButton({
     super.key,
     required this.text,
     required this.press,
-    this.color = primaryColor,
-    this.padding = const EdgeInsets.all(kDefaultPadding * 0.75),
+    this.color,
+    this.textColor = Colors.white,
+    this.borderRadius = const BorderRadius.all(Radius.circular(8)),
+    this.elevation = 2,
   });
-
-  final String text;
-  final VoidCallback press;
-  final Color color;
-  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialButton(
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(40)),
-      ),
-      padding: padding,
-      color: color,
-      minWidth: double.infinity,
+    return ElevatedButton(
       onPressed: press,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color ?? Theme.of(context).primaryColor,
+        foregroundColor: textColor,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: borderRadius,
+        ),
+        elevation: elevation,
+      ),
       child: Text(
         text,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(fontSize: 16, color: textColor),
       ),
     );
   }

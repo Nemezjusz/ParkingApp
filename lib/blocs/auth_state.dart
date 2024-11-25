@@ -10,6 +10,7 @@ class AuthInitial extends AuthState {
 }
 
 class Authenticated extends AuthState {
+  @override
   final String token;
   const Authenticated(this.token) : super(isAuthenticated: true, token: token);
 }

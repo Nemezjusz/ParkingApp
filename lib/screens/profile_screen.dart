@@ -129,6 +129,8 @@ class ProfileScreen extends StatelessWidget {
 
 // Widget do zarządzania powiadomieniami
 class NotificationsSwitch extends StatefulWidget {
+  const NotificationsSwitch({super.key});
+
   @override
   _NotificationsSwitchState createState() => _NotificationsSwitchState();
 }

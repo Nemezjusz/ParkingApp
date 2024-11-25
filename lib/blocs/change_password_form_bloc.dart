@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:smart_parking/blocs/auth_bloc.dart';
+import 'package:logger/logger.dart';
 
 class ChangePasswordFormBloc extends FormBloc<String, String> {
   final TextFieldBloc currentPassword = TextFieldBloc(
@@ -12,6 +13,7 @@ class ChangePasswordFormBloc extends FormBloc<String, String> {
   );
 
   final AuthBloc authBloc;
+  final Logger logger = Logger();
 
   ChangePasswordFormBloc({required this.authBloc}) {
     addFieldBlocs(fieldBlocs: [currentPassword, newPassword]);
@@ -21,14 +23,19 @@ class ChangePasswordFormBloc extends FormBloc<String, String> {
   void onSubmitting() async {
     final authState = authBloc.state;
 
+    logger.i('--- Rozpoczęcie procesu zmiany hasła ---');
+
     if (!authState.isAuthenticated || authState.token == null) {
+      logger.i('--- Użytkownik nie jest zalogowany ---');
       emitFailure(failureResponse: 'Nie jesteś zalogowany.');
       return;
     }
 
     try {
+      logger.i('--- Wysłanie żądania zmiany hasła ---');
       final response = await http.post(
-        Uri.parse('https://pilarz.dev/change-password'),
+        Uri.parse('http://10.0.2.2:8000/change-password'),
+        // Uri.parse('https://pilarz.dev/change-password'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${authState.token}',
@@ -40,13 +47,18 @@ class ChangePasswordFormBloc extends FormBloc<String, String> {
       );
 
       if (response.statusCode == 200) {
+        logger.i('--- Hasło zostało zmienione pomyślnie ---');
         emitSuccess();
       } else {
         final error = jsonDecode(response.body)['detail'];
+        logger.i('--- Błąd serwera: $error ---');
         emitFailure(failureResponse: error);
       }
     } catch (e) {
+      logger.i('--- Błąd podczas zmiany hasła: $e ---');
       emitFailure(failureResponse: 'Błąd podczas zmiany hasła.');
     }
+
+    logger.i('--- Proces zmiany hasła zakończony ---');
   }
 }

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
-import 'package:smart_parking/constants/constants.dart';
-import 'package:smart_parking/screens/parking_map_screen.dart';
+import 'package:smart_parking/blocs/login_form_bloc.dart';
 import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/blocs/auth_event.dart';
 import 'package:smart_parking/widgets/dialogs/loading_dialog.dart';
 import 'package:smart_parking/widgets/fields/input_widget.dart';
-import '../blocs/login_form_bloc.dart';
-import '../widgets/primary_button.dart';
+import 'package:smart_parking/widgets/primary_button.dart';
+import 'package:smart_parking/screens/parking_map_screen.dart';
+import 'package:smart_parking/constants/constants.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -54,7 +54,7 @@ class LoginScreen extends StatelessWidget {
                 child: SingleChildScrollView(
                   child: Padding(
                     padding:
-                    const EdgeInsets.symmetric(horizontal: kDefaultPadding),
+                        const EdgeInsets.symmetric(horizontal: kDefaultPadding),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -70,13 +70,11 @@ class LoginScreen extends StatelessWidget {
                           "Sign in to your account",
                           textAlign: TextAlign.center,
                           style:
-                          Theme.of(context).textTheme.titleLarge!.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.color,
-                          ),
+                              Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).textTheme.bodyMedium?.color,
+                                  ),
                         ),
                         const SizedBox(height: kDefaultPadding),
                         InputWidget(
@@ -100,7 +98,6 @@ class LoginScreen extends StatelessWidget {
                           press: () => loginFormBloc.submit(),
                         ),
                         const SizedBox(height: kDefaultPadding * 2),
-                        // Usunięto opcję "Forgot your password?"
                       ],
                     ),
                   ),

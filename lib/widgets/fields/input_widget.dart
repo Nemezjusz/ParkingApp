@@ -1,101 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 
-/// A simplified input widget with fieldBloc and autofillHints support.
-/// Reflects a clean and modern design.
 class InputWidget extends StatelessWidget {
-  final String? hintText;
-  final IconData? prefixIcon;
-  final IconData? suffixIcon;
-  final VoidCallback? onSuffixIconPressed;
-  final bool obscureText;
-  final Iterable<String>? autofillHints;
-  final TextInputType? textInputType;
+  final String hintText;
+  final IconData prefixIcon;
   final TextFieldBloc fieldBloc;
-  final bool isReadOnly; // New parameter for read-only functionality
+  final List<String>? autofillHints;
+  final bool isReadOnly;
+  final TextInputType? textInputType;
+  final bool obscureText;
 
   const InputWidget({
-    Key? key,
-    this.hintText,
-    this.prefixIcon,
-    this.suffixIcon,
-    this.onSuffixIconPressed,
-    this.obscureText = false,
-    this.autofillHints,
-    this.textInputType,
+    super.key,
+    required this.hintText,
+    required this.prefixIcon,
     required this.fieldBloc,
-    this.isReadOnly = false, // Default to editable unless specified
-  }) : super(key: key);
+    this.autofillHints,
+    this.isReadOnly = false,
+    this.textInputType,
+    this.obscureText = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Use a standard gray color for hint and suffix icon if not otherwise defined
-    final Color iconColor = Colors.grey;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFieldBlocBuilder(
-          textFieldBloc: fieldBloc,
-          suffixButton: obscureText ? SuffixButton.obscureText : null,
-          autofillHints: autofillHints,
-          keyboardType: textInputType,
-          readOnly: isReadOnly, // Set readOnly based on isReadOnly
-          decoration: InputDecoration(
-            prefixIcon: prefixIcon != null
-                ? Padding(
-                    padding: const EdgeInsets.only(left: 12.0),
-                    child: Icon(
-                      prefixIcon,
-                      color: Theme.of(context).primaryColor.withOpacity(0.7),
-                    ),
-                  )
-                : null,
-            suffixIcon: suffixIcon != null
-                ? IconButton(
-                    icon: Icon(suffixIcon, color: iconColor),
-                    onPressed: onSuffixIconPressed,
-                  )
-                : null,
-            hintText: hintText,
-            hintStyle: TextStyle(
-              fontSize: 14.0,
-              color: iconColor,
-            ),
-            filled: true,
-            fillColor: Colors.grey.withOpacity(0.1),
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 20.0,
-              horizontal: 0.0,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-              borderSide: BorderSide(
-                color: Colors.transparent,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-              borderSide: const BorderSide(
-                color: Colors.red,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-              borderSide: const BorderSide(
-                color: Colors.red,
-              ),
-            ),
-          ),
+    return TextFieldBlocBuilder(
+      textFieldBloc: fieldBloc,
+      autofocus: false,
+      readOnly: isReadOnly,
+      autofillHints: autofillHints,
+      keyboardType: textInputType,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        hintText: hintText,
+        prefixIcon: Icon(prefixIcon),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-        const SizedBox(height: 4.0),
-      ],
+        filled: true,
+        fillColor: Colors.grey.shade100,
+      ),
+      style: const TextStyle(fontSize: 16),
     );
   }
 }
