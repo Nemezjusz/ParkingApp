@@ -18,7 +18,10 @@ class ChangePasswordScreen extends StatelessWidget {
           final formBloc = context.read<ChangePasswordFormBloc>();
 
           return Scaffold(
-            appBar: AppBar(title: Text('Change Password')),
+            appBar: AppBar(
+              title: Text('Change Password'),
+              backgroundColor: Theme.of(context).primaryColor,
+            ),
             body: FormBlocListener<ChangePasswordFormBloc, String, String>(
               onSubmitting: (context, state) => LoadingDialog.show(context),
               onSuccess: (context, state) {

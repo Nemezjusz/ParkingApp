@@ -1,22 +1,19 @@
-class AuthState {
+abstract class AuthState {
   final bool isAuthenticated;
   final String? token;
 
-  AuthState({
-    required this.isAuthenticated,
-    this.token,
-  });
+  const AuthState({required this.isAuthenticated, this.token});
 }
 
 class AuthInitial extends AuthState {
-  AuthInitial() : super(isAuthenticated: false);
+  const AuthInitial() : super(isAuthenticated: false);
 }
 
 class Authenticated extends AuthState {
-  Authenticated(String token)
-      : super(isAuthenticated: true, token: token);
+  final String token;
+  const Authenticated(this.token) : super(isAuthenticated: true, token: token);
 }
 
 class Unauthenticated extends AuthState {
-  Unauthenticated() : super(isAuthenticated: false);
+  const Unauthenticated() : super(isAuthenticated: false);
 }

@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 
-const Color backgroundColor = Color(0xFF1A1A1A);
-const Color primaryColor = Color(0xFF6200EA);
-const Color sectionBackground = Color(0xFF1A1A1A);
-const Color iconAccentColor = Color(0xFFBB86FC);
-const Color dividerColor = Color(0xFF444444);
+const double kDefaultPadding = 16.0;
 
-const Color parkingSpotAvailable = Color(0xFF4CAF50);
-const Color parkingSpotReserved = Color(0xFFFFA000);
-const Color parkingSpotOccupied = Color(0xFFD32F2F);
-const Color bottomNavBackground = Color(0xFF121212);
-
-
-const double kDefaultPadding = 20.0;
+const Color parkingSpotReserved = Color(0xFFFFC107); // Żółty
+const Color parkingSpotOccupied = Color(0xFFF44336); // Czerwony
+const Color parkingSpotConfirmed = Colors.orange;
+const Color parkingSpotFree = Colors.green;
+const Color parkingSpotAvailable = Colors.green; // Dodany kolor
