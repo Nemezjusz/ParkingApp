@@ -148,13 +148,13 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
         "last_status_update": datetime.now(timezone.utc)
     }
     
+    reservation = await reservations_col.find_one({
+        "parking_spot_id": spot_status.parking_spot_id,
+        "active": True
+    })
+
     if spot_status.status == "occupied":
         # sprawdza czy jest rezerwacja
-        reservation = await reservations_col.find_one({
-            "parking_spot_id": spot_status.parking_spot_id,
-            "active": True
-        })
-        
         if reservation:
             update_data["waiting_confirmation"] = True
             update_data["color"] = "BLUE"  # jak czeka na potwierdzenie to zmienia na niebieski, ale nie musi
@@ -167,6 +167,10 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
             )
         else:
             update_data["color"] = "RED"
+
+    elif reservation and spot_status.status == "free":
+        update_data["color"] = "YELLOW"
+        update_data["waiting_confirmation"] = False
     else:
         update_data["waiting_confirmation"] = False
         update_data["color"] = "GREEN"
