@@ -148,29 +148,45 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
         "last_status_update": datetime.now(timezone.utc)
     }
     
+    reservation = await reservations_col.find_one({
+        "parking_spot_id": spot_status.parking_spot_id,
+        "active": True
+    })
+
     if spot_status.status == "occupied":
         # sprawdza czy jest rezerwacja
-        reservation = await reservations_col.find_one({
-            "parking_spot_id": spot_status.parking_spot_id,
-            "active": True
-        })
-        
         if reservation:
-            update_data["waiting_confirmation"] = True
-            update_data["color"] = "BLUE"  # jak czeka na potwierdzenie to zmienia na niebieski, ale nie musi
-
-            await reservations_col.update_one(
-                {"_id": reservation["_id"]},
-                {"$set": {
-                    "confirmation_deadline": datetime.now(timezone.utc) + timedelta(minutes=CONFIRMATION_TIMEOUT_MINUTES)
-                }}
-            )
+            current_time = datetime.now(timezone.utc)
+            if "confirmation_deadline" in reservation and current_time > reservation["confirmation_deadline"]:
+                update_data["color"] = "RED_BLINK"
+                update_data["waiting_confirmation"] = False
+            else:
+                update_data["waiting_confirmation"] = True
+                update_data["color"] = "BLUE"
+                
+                await reservations_col.update_one(
+                    {"_id": reservation["_id"]},
+                    {"$set": {
+                        "confirmation_deadline": datetime.now(timezone.utc) + timedelta(minutes=CONFIRMATION_TIMEOUT_MINUTES)
+                    }}
+                )
         else:
             update_data["color"] = "RED"
+
+    elif reservation and spot_status.status == "free":
+        update_data["color"] = "YELLOW"
+        update_data["waiting_confirmation"] = False
+
+        await reservations_col.update_one(
+            {"_id": reservation["_id"]},
+            {"$unset": {"confirmation_deadline": ""}}
+        )
+
     else:
         update_data["waiting_confirmation"] = False
         update_data["color"] = "GREEN"
-    
+        
+
     await parking_spots_col.update_one(
         {"_id": ObjectId(spot_status.parking_spot_id)},
         {"$set": update_data}
@@ -315,7 +331,8 @@ async def reserve_parking_spot(
                 "reserved_user_id": str(current_user["_id"]),
                 "reservation_date": datetime.combine(reservation.reservation_date, datetime.min.time()).isoformat(),  # Konwersja
                 "start_time": reservation.start_time.isoformat(),
-                "end_time": reservation.end_time.isoformat()
+                "end_time": reservation.end_time.isoformat(),
+                "reserved_by": current_user["full_name"]
             }}
         )
         return {"message": "Parking spot reserved", "color": "YELLOW"}
@@ -343,7 +360,8 @@ async def reserve_parking_spot(
                 "reserved_user_id": None,
                 "reservation_date": None,
                 "start_time": None,
-                "end_time": None
+                "end_time": None,
+                "reserved_by": None
             }}
         )
         return {"message": "Reservation cancelled", "color": "GREEN"}
@@ -359,7 +377,8 @@ async def get_parking_status():
             "color": spot.get("color", "GREEN"),
             "floor": spot.get("floor", "unknown"),
             "spot_number": spot.get("spot_number", "unknown"),
-            "waiting_confirmation": spot.get("waiting_confirmation", False)
+            "waiting_confirmation": spot.get("waiting_confirmation", False),
+            "reserved_by": spot.get("reserved_by", "unknown")
         }
         spots.append(spot_data)
     return spots
@@ -379,7 +398,7 @@ async def get_user_reservations(current_user: dict = Depends(get_current_user)):
         reservation_data = {
             "id": str(reservation["_id"]),
             "parking_spot_id": reservation["parking_spot_id"],
-            "pretty_id": pretty_id,  # Dodanie pretty_id do odpowiedzi
+            "pretty_id": pretty_id,
             "reservation_date": reservation["reservation_date"],
             "start_time": reservation["start_time"],
             "end_time": reservation["end_time"],
