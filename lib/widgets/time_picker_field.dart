@@ -1,7 +1,5 @@
-// lib/widgets/time_picker_field.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
 class TimePickerFieldBlocBuilder extends StatelessWidget {
@@ -21,7 +19,6 @@ class TimePickerFieldBlocBuilder extends StatelessWidget {
       decoration: decoration,
       readOnly: true,
       onTap: () async {
-        // Inicjalny czas - bieżący lub z pola
         TimeOfDay initialTime = TimeOfDay.now();
         if (fieldBloc.value.isNotEmpty) {
           final parts = fieldBloc.value.split(':');
@@ -35,19 +32,17 @@ class TimePickerFieldBlocBuilder extends StatelessWidget {
 
         Logger logger = Logger();
 
-        // Pokazanie dialogu wyboru czasu
         TimeOfDay? pickedTime = await showTimePicker(
           context: context,
           initialTime: initialTime,
         );
 
         if (pickedTime != null) {
-          // Formatowanie czasu do 24-godzinnego formatu
           final now = DateTime.now();
           final dt = DateTime(now.year, now.month, now.day, pickedTime.hour, pickedTime.minute);
           final formattedTime = DateFormat('HH:mm').format(dt);
           fieldBloc.updateValue(formattedTime);
-          logger.i('Picked Time: $formattedTime'); // Debug log
+          logger.i('Picked Time: $formattedTime');
         }
       },
       style: TextStyle(
