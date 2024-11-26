@@ -7,7 +7,6 @@ import 'package:smart_parking/blocs/reservation_form_bloc.dart';
 import 'package:smart_parking/blocs/parking_spot_bloc.dart';
 import 'package:smart_parking/models/parking_spot.dart';
 import 'package:dropdown_search/dropdown_search.dart';
-import 'package:intl/intl.dart';
 
 class ReservationForm extends StatelessWidget {
   const ReservationForm({super.key});
@@ -15,14 +14,13 @@ class ReservationForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reservationFormBloc = context.read<ReservationFormBloc>();
-    final parkingSpotBloc = context.read<ParkingSpotBloc>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const CustomTitle(
           icon: Icons.book_online,
-          title: 'Zarezerwuj Miejsce Parkingowe',
+          title: 'Reserve a Parking Spot',
         ),
         const SizedBox(height: 16),
 
@@ -36,11 +34,12 @@ class ReservationForm extends StatelessWidget {
                   .where((spot) => spot.status == 'free')
                   .toList();
               if (freeSpots.isEmpty) {
-                return const Text('Brak dostępnych miejsc parkingowych.');
+                return const Text('No free parking spots available');
               }
               return DropdownSearch<ParkingSpot>(
                 items: freeSpots,
-                itemAsString: (ParkingSpot spot) => spot.prettyId, // Użyj prettyId
+                itemAsString: (ParkingSpot spot) =>
+                    spot.prettyId, // Użyj prettyId
                 onChanged: (ParkingSpot? selectedSpot) {
                   if (selectedSpot != null) {
                     reservationFormBloc.parkingSpotId
@@ -54,7 +53,7 @@ class ReservationForm extends StatelessWidget {
                 ),
                 dropdownDecoratorProps: DropDownDecoratorProps(
                   dropdownSearchDecoration: InputDecoration(
-                    labelText: "Wybierz Miejsce Parkingowe",
+                    labelText: "Parking Spot",
                     prefixIcon: const Icon(Icons.local_parking),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -63,7 +62,7 @@ class ReservationForm extends StatelessWidget {
                 ),
               );
             } else if (state is ParkingSpotError) {
-              return Text('Błąd: ${state.message}');
+              return Text('Error: ${state.message}');
             } else {
               return const SizedBox.shrink();
             }
@@ -77,7 +76,7 @@ class ReservationForm extends StatelessWidget {
             final DateTime? pickedDate = await showDatePicker(
               context: context,
               initialDate:
-              reservationFormBloc.reservationDate.value ?? DateTime.now(),
+                  reservationFormBloc.reservationDate.value ?? DateTime.now(),
               firstDate: DateTime.now(),
               lastDate: DateTime.now().add(const Duration(days: 30)),
             );
@@ -91,7 +90,7 @@ class ReservationForm extends StatelessWidget {
             builder: (context, state) {
               return InputDecorator(
                 decoration: InputDecoration(
-                  labelText: "Data Rezerwacji",
+                  labelText: "Date",
                   prefixIcon: const Icon(Icons.calendar_today),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -100,8 +99,8 @@ class ReservationForm extends StatelessWidget {
                 child: Text(
                   reservationFormBloc.reservationDate.value != null
                       ? DateFormat('yyyy-MM-dd')
-                      .format(reservationFormBloc.reservationDate.value!)
-                      : 'Wybierz datę',
+                          .format(reservationFormBloc.reservationDate.value!)
+                      : 'Select Date',
                   style: TextStyle(
                     color: reservationFormBloc.reservationDate.value != null
                         ? Colors.black
@@ -118,7 +117,7 @@ class ReservationForm extends StatelessWidget {
         TimePickerFieldBlocBuilder(
           fieldBloc: reservationFormBloc.startTime,
           decoration: InputDecoration(
-            labelText: "Godzina Rozpoczęcia",
+            labelText: "Start Time",
             prefixIcon: const Icon(Icons.access_time),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -129,7 +128,7 @@ class ReservationForm extends StatelessWidget {
         TimePickerFieldBlocBuilder(
           fieldBloc: reservationFormBloc.endTime,
           decoration: InputDecoration(
-            labelText: "Godzina Zakończenia",
+            labelText: "End Time",
             prefixIcon: const Icon(Icons.access_time),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -142,7 +141,7 @@ class ReservationForm extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: PrimaryButton(
-            text: "Zarezerwuj Miejsce",
+            text: "Confirm",
             press: () => reservationFormBloc.submit(),
             color: Colors.blueAccent,
             textColor: Colors.white,

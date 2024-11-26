@@ -69,12 +69,16 @@ class LoginScreen extends StatelessWidget {
                         Text(
                           "Sign in to your account",
                           textAlign: TextAlign.center,
-                          style:
-                              Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color:
-                                        Theme.of(context).textTheme.bodyMedium?.color,
-                                  ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.color,
+                              ),
                         ),
                         const SizedBox(height: kDefaultPadding),
                         InputWidget(

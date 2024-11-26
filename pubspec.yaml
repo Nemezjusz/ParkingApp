@@ -33,6 +33,7 @@ dependencies:
   logger: ^2.5.0
   dropdown_search: ^5.0.2
   equatable: ^2.0.7
+  flutter_dotenv: ^5.2.1
 
 
 dev_dependencies:
@@ -45,3 +46,4 @@ flutter:
   assets:
     - assets/images/
     - assets/animations/
+    - .env

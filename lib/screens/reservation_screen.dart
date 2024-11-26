@@ -17,7 +17,7 @@ class ReservationScreen extends StatefulWidget {
 
 class _ReservationScreenState extends State<ReservationScreen> {
   final GlobalKey<YourReservationsSectionState> _reservationSectionKey =
-  GlobalKey<YourReservationsSectionState>();
+      GlobalKey<YourReservationsSectionState>();
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
     if (authState is! Authenticated) {
       return Scaffold(
         body: Center(
-          child: Text('Użytkownik nie jest zalogowany.'),
+          child: Text('You need to be logged in to make a reservation'),
         ),
       );
     }
@@ -38,7 +38,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
           return Scaffold(
             appBar: AppBar(
               title: Text(
-                'Rezerwacja Parkingu',
+                'Spot Reservation',
                 style: GoogleFonts.poppins(
                   textStyle: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -59,7 +59,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
             ),
             body: FormBlocListener<ReservationFormBloc, String, String>(
               onSubmitting: (context, state) => LoadingDialog.show(context),
-              onSubmissionFailed: (context, state) => LoadingDialog.hide(context),
+              onSubmissionFailed: (context, state) =>
+                  LoadingDialog.hide(context),
               onSuccess: (context, state) {
                 LoadingDialog.hide(context);
                 ScaffoldMessenger.of(context).showSnackBar(

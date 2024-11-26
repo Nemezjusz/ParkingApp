@@ -10,17 +10,27 @@ import 'package:smart_parking/services/local_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:smart_parking/blocs/parking_spot_bloc.dart';
 import 'package:smart_parking/blocs/auth_state.dart';
+import 'package:logger/logger.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+final Logger logger = Logger();
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  print('Handling a background message: ${message.messageId}');
+  logger.i('Handling a background message: ${message.messageId}');
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: ".env");
+    logger.i('🔵 API_BASE_URL: ${dotenv.env['API_BASE_URL']}');
+  } catch (e) {
+    logger.e('🔴 Nie można załadować pliku .env: $e');
+  }
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -30,7 +40,8 @@ void main() async {
   PushNotificationService pushNotificationService = PushNotificationService();
   await pushNotificationService.initialize();
 
-  LocalNotificationService localNotificationService = LocalNotificationService();
+  LocalNotificationService localNotificationService =
+      LocalNotificationService();
   await localNotificationService.initialize();
 
   runApp(
@@ -46,7 +57,8 @@ void main() async {
           create: (context) {
             final authState = context.read<AuthBloc>().state;
             if (authState is Authenticated) {
-              return ParkingSpotBloc(token: authState.token)..add(FetchParkingSpots());
+              return ParkingSpotBloc(token: authState.token)
+                ..add(FetchParkingSpots());
             } else {
               throw Exception("User not authenticated");
             }

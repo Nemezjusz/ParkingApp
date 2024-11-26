@@ -35,7 +35,8 @@ class ReservationItem extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cancel Reservation?'),
-        content: Text('Are you sure you want to cancel the reservation for spot $spot?'),
+        content: Text(
+            'Are you sure you want to cancel the reservation for spot $spot?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -54,7 +55,8 @@ class ReservationItem extends StatelessWidget {
       try {
         final authState = context.read<AuthBloc>().state;
         if (authState is Authenticated) {
-          await ApiService.cancelReservation(parkingSpotId, date, startTime, endTime, authState.token);
+          await ApiService.cancelReservation(
+              parkingSpotId, date, startTime, endTime, authState.token);
           LoadingDialog.hide(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -126,7 +128,8 @@ class ReservationItem extends StatelessWidget {
         ),
         trailing: IconButton(
           icon: const Icon(Icons.cancel, color: Colors.white, size: 30),
-          onPressed: () => _cancelReservation(context, parkingSpotId, date, startTime, endTime, spot),
+          onPressed: () => _cancelReservation(
+              context, parkingSpotId, date, startTime, endTime, spot),
         ),
       ),
     );

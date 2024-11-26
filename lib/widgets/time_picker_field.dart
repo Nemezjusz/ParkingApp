@@ -39,7 +39,8 @@ class TimePickerFieldBlocBuilder extends StatelessWidget {
 
         if (pickedTime != null) {
           final now = DateTime.now();
-          final dt = DateTime(now.year, now.month, now.day, pickedTime.hour, pickedTime.minute);
+          final dt = DateTime(
+              now.year, now.month, now.day, pickedTime.hour, pickedTime.minute);
           final formattedTime = DateFormat('HH:mm').format(dt);
           fieldBloc.updateValue(formattedTime);
           logger.i('Picked Time: $formattedTime');

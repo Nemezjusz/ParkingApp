@@ -9,6 +9,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/blocs/auth_state.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
+
+final logger = Logger();
 
 class YourReservationsSection extends StatefulWidget {
   const YourReservationsSection({super.key});
@@ -30,8 +33,18 @@ class YourReservationsSectionState extends State<YourReservationsSection> {
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
       reservations = ApiService.fetchUserReservations(authState.token).then(
-            (data) => data.map((json) => Reservation.fromJson(json)).toList(),
-      );
+        (data) {
+          try {
+            return data.map((json) => Reservation.fromJson(json)).toList();
+          } catch (e, stackTrace) {
+            logger.e('🔴 Błąd podczas parsowania rezerwacji: $e\n$stackTrace');
+            rethrow;
+          }
+        },
+      ).catchError((error) {
+        logger.e('🔴 Błąd podczas pobierania rezerwacji: $error');
+        throw error;
+      });
     } else {
       reservations = Future.value([]);
     }
@@ -50,7 +63,7 @@ class YourReservationsSectionState extends State<YourReservationsSection> {
       children: [
         const CustomTitle(
           icon: Icons.calendar_today,
-          title: 'Twoje Rezerwacje',
+          title: 'Your Reservations',
         ),
         const SizedBox(height: 10),
         FutureBuilder<List<Reservation>>(
@@ -61,14 +74,14 @@ class YourReservationsSectionState extends State<YourReservationsSection> {
             } else if (snapshot.hasError) {
               return Center(
                 child: Text(
-                  'Wystąpił błąd podczas ładowania rezerwacji.',
+                  'Error occurred during loading reservations.',
                   style: GoogleFonts.poppins(color: Colors.red),
                 ),
               );
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return Center(
                 child: Text(
-                  'Brak zarejestrowanych rezerwacji.',
+                  'You have no reservations yet.',
                   style: GoogleFonts.poppins(color: Colors.grey),
                 ),
               );
@@ -82,7 +95,7 @@ class YourReservationsSectionState extends State<YourReservationsSection> {
                   try {
                     final parsedDate = DateTime.parse(reservation.date);
                     final formattedDate =
-                    DateFormat('dd-MM-yyyy').format(parsedDate);
+                        DateFormat('dd-MM-yyyy').format(parsedDate);
 
                     return ReservationItem(
                       parkingSpotId: reservation.parkingSpotId,

@@ -23,7 +23,8 @@ class LoadingDialog extends StatelessWidget {
       onWillPop: () async => false,
       child: Center(
         child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
             width: 150,
             height: 150,
@@ -32,7 +33,8 @@ class LoadingDialog extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Dodanie animacji Lottie
-                Lottie.asset('assets/animations/car-loading.json', width: 180, height: 180, repeat: true),
+                Lottie.asset('assets/animations/car-loading.json',
+                    width: 180, height: 180, repeat: true),
                 const SizedBox(height: 20),
                 const Text(
                   'Proszę czekać...',

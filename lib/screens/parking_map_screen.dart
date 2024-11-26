@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_parking/blocs/auth_bloc.dart';
+import 'package:smart_parking/blocs/auth_state.dart';
 import 'package:smart_parking/blocs/parking_spot_bloc.dart';
-import 'package:smart_parking/models/parking_spot.dart';
+import 'package:smart_parking/screens/login_screen.dart';
 import 'package:smart_parking/screens/profile_screen.dart';
 import 'package:smart_parking/screens/reservation_screen.dart';
 import 'package:smart_parking/widgets/custom_app_bar.dart';
 import 'package:smart_parking/widgets/custom_title.dart';
 import 'package:smart_parking/widgets/your_reservations_section.dart';
 import '../widgets/parking_spot_tile.dart';
-import 'package:smart_parking/constants/constants.dart';
 
 class ParkingMapScreen extends StatefulWidget {
   const ParkingMapScreen({Key? key}) : super(key: key);
@@ -20,53 +21,67 @@ class ParkingMapScreen extends StatefulWidget {
 class _ParkingMapScreenState extends State<ParkingMapScreen> {
   int _selectedIndex = 0;
 
-  late List<Widget> _screens;
-
-  @override
-  void initState() {
-    super.initState();
-    final token = 'YOUR_TOKEN_HERE'; // Replace with actual token
-
-    _screens = [
-      BlocProvider<ParkingSpotBloc>(
-        create: (context) {
-          final bloc = ParkingSpotBloc(token: token);
-          bloc.add(FetchParkingSpots());
-          return bloc;
-        },
-        child: ParkingMapView(),
-      ),
-      ReservationScreen(),
-      ProfileScreen(),
-    ];
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(title: "Smart Parking"),
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-        selectedItemColor: Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
-        unselectedItemColor: Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.directions_car), label: 'Reservation'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        if (!authState.isAuthenticated || authState.token == null) {
+          // Jeśli użytkownik nie jest uwierzytelniony, przekieruj na ekran logowania
+          Future.microtask(() {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LoginScreen()),
+            );
+          });
+          return Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final token = authState.token!;
+
+        final List<Widget> _screens = [
+          BlocProvider<ParkingSpotBloc>(
+            create: (context) {
+              final bloc = ParkingSpotBloc(token: token);
+              bloc.add(FetchParkingSpots());
+              return bloc;
+            },
+            child: ParkingMapView(),
+          ),
+          ReservationScreen(),
+          ProfileScreen(),
+        ];
+
+        return Scaffold(
+          appBar: CustomAppBar(title: "Smart Parking"),
+          body: _screens[_selectedIndex],
+          bottomNavigationBar: BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            backgroundColor:
+                Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+            selectedItemColor:
+                Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+            unselectedItemColor:
+                Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.directions_car), label: 'Reservation'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.person), label: 'Profile'),
+            ],
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -119,8 +134,10 @@ class ParkingMapView extends StatelessWidget {
                   });
 
                   return GridView.builder(
-                    physics: const NeverScrollableScrollPhysics(), // Wyłączenie przewijania mapy
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    physics:
+                        const NeverScrollableScrollPhysics(), // Wyłączenie przewijania mapy
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 5,
                       crossAxisSpacing: 15,
                       mainAxisSpacing: 10,

@@ -45,7 +45,8 @@ class SettingsTile extends StatelessWidget {
       ),
       subtitle: Text(subtitle),
       onTap: onTap,
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      trailing:
+          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
     );
   }
 }

@@ -3,20 +3,27 @@ import 'package:http/http.dart' as http;
 import 'package:smart_parking/models/parking_spot.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8000';
-  // static const String baseUrl = 'https://pilarz.dev';
+  static final String _baseUrl =
+      dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8000';
+  static final String _loginEndpoint = dotenv.env['LOGIN_ENDPOINT'] ?? '/login';
+  static final String _reservationsEndpoint =
+      dotenv.env['RESERVATIONS_ENDPOINT'] ?? '/reservations';
+  static final String _parkingStatusEndpoint =
+      dotenv.env['PARKING_STATUS_ENDPOINT'] ?? '/parking_status';
+  static final String _reserveEndpoint =
+      dotenv.env['RESERVE_ENDPOINT'] ?? '/reserve';
 
   static final Logger logger = Logger();
 
-  // Metoda do logowania
   static Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/login'),
+      Uri.parse('$_baseUrl$_loginEndpoint'),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -33,10 +40,10 @@ class ApiService {
     }
   }
 
-  // Pobieranie rezerwacji użytkownika
-  static Future<List<Map<String, dynamic>>> fetchUserReservations(String token) async {
+  static Future<List<Map<String, dynamic>>> fetchUserReservations(
+      String token) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/reservations'),
+      Uri.parse('$_baseUrl$_reservationsEndpoint'),
       headers: {
         'Authorization': 'Bearer $token',
       },
@@ -54,10 +61,9 @@ class ApiService {
     }
   }
 
-  // Metoda do pobierania statusu parking spots
   static Future<List<ParkingSpot>> getParkingStatus(String token) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/parking_status'),
+      Uri.parse('$_baseUrl$_parkingStatusEndpoint'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -76,9 +82,10 @@ class ApiService {
     }
   }
 
-  // Metoda do anulowania rezerwacji
-  static Future<void> cancelReservation(String parkingSpotId, String date, String startTime, String endTime, String token) async {
-    final formattedDate = DateFormat('yyyy-MM-dd').format(DateFormat('dd-MM-yyyy').parse(date));
+  static Future<void> cancelReservation(String parkingSpotId, String date,
+      String startTime, String endTime, String token) async {
+    final formattedDate =
+        DateFormat('yyyy-MM-dd').format(DateFormat('dd-MM-yyyy').parse(date));
 
     final requestBody = {
       'parking_spot_id': parkingSpotId,
@@ -88,11 +95,11 @@ class ApiService {
       'reservation_end_time': endTime,
     };
 
-    // Logowanie wysyłanego ciała żądania
-    print("Sending request to $baseUrl/reserve with body: ${json.encode(requestBody)}");
+    logger.d(
+        "Sending request to $_baseUrl$_reserveEndpoint with body: ${json.encode(requestBody)}");
 
     final response = await http.post(
-      Uri.parse('$baseUrl/reserve'),
+      Uri.parse('$_baseUrl$_reserveEndpoint'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -100,9 +107,8 @@ class ApiService {
       body: json.encode(requestBody),
     );
 
-    // Logowanie odpowiedzi
-    print("Response status: ${response.statusCode}");
-    print("Response body: ${response.body}");
+    logger.d("Response status: ${response.statusCode}");
+    logger.d("Response body: ${response.body}");
 
     if (response.statusCode != 200) {
       throw Exception('Failed to cancel reservation');
@@ -116,7 +122,6 @@ class ApiService {
     return time;
   }
 
-  // Metoda do rezerwowania miejsca parkingowego
   static Future<void> reserveParkingSpot({
     required String parkingSpotId,
     required String action,
@@ -138,7 +143,7 @@ class ApiService {
     logger.d('Sending Reservation with body: $body');
 
     final response = await http.post(
-      Uri.parse('$baseUrl/reserve'),
+      Uri.parse('$_baseUrl$_reserveEndpoint'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

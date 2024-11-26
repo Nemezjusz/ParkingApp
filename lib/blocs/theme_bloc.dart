@@ -55,8 +55,10 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
       headlineMedium: TextStyle(color: Colors.black),
       bodyLarge: TextStyle(color: Colors.black),
       bodyMedium: TextStyle(color: Colors.black),
-      titleLarge: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
-      titleSmall: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.normal),
+      titleLarge: TextStyle(
+          color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+      titleSmall: TextStyle(
+          color: Colors.black, fontSize: 20, fontWeight: FontWeight.normal),
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: Color(0xFFc6ad8f),
@@ -106,8 +108,10 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
       headlineMedium: TextStyle(color: Colors.white),
       bodyLarge: TextStyle(color: Colors.white),
       bodyMedium: TextStyle(color: Colors.white),
-      titleLarge: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
-      titleSmall: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.normal),
+      titleLarge: TextStyle(
+          color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+      titleSmall: TextStyle(
+          color: Colors.white, fontSize: 20, fontWeight: FontWeight.normal),
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: Color(0xFFc6ad8f),

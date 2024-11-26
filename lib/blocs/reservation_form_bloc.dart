@@ -8,7 +8,8 @@ class ReservationFormBloc extends FormBloc<String, String> {
   final Logger logger = Logger();
 
   // Fields
-  final parkingSpotId = TextFieldBloc(validators: [FieldBlocValidators.required]);
+  final parkingSpotId =
+      TextFieldBloc(validators: [FieldBlocValidators.required]);
   final reservationDate = InputFieldBloc<DateTime, Object>(
     validators: [FieldBlocValidators.required],
     initialValue: DateTime.now(),
@@ -17,7 +18,8 @@ class ReservationFormBloc extends FormBloc<String, String> {
   final endTime = TextFieldBloc(validators: [FieldBlocValidators.required]);
 
   ReservationFormBloc({required this.token}) {
-    addFieldBlocs(fieldBlocs: [parkingSpotId, reservationDate, startTime, endTime]);
+    addFieldBlocs(
+        fieldBlocs: [parkingSpotId, reservationDate, startTime, endTime]);
   }
 
   @override
@@ -37,7 +39,9 @@ class ReservationFormBloc extends FormBloc<String, String> {
       logger.i('End Time: $endTimeValue');
 
       if (!_isTimeValid(startTimeValue, endTimeValue)) {
-        emitFailure(failureResponse: "Godzina zakończenia musi być późniejsza niż godzina rozpoczęcia.");
+        emitFailure(
+            failureResponse:
+                "Godzina zakończenia musi być późniejsza niż godzina rozpoczęcia.");
         return;
       }
 
@@ -60,7 +64,8 @@ class ReservationFormBloc extends FormBloc<String, String> {
       );
       logger.i('Reservation sent successfully.');
 
-      emitSuccess(successResponse: "Miejsce parkingowe zarezerwowane pomyślnie!");
+      emitSuccess(
+          successResponse: "Miejsce parkingowe zarezerwowane pomyślnie!");
     } catch (error) {
       logger.e('Error occurred during reservation: $error');
       emitFailure(failureResponse: "Wystąpił błąd: $error");

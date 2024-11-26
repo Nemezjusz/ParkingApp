@@ -3,13 +3,22 @@ import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:http/http.dart' as http;
 import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ChangePasswordFormBloc extends FormBloc<String, String> {
+  static final String _baseUrl =
+      dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8000';
+  static final String _changePasswordEndpoint =
+      dotenv.env['CHANGE_PASSWORD_ENDPOINT'] ?? '/change-password';
+
   final TextFieldBloc currentPassword = TextFieldBloc(
     validators: [FieldBlocValidators.required],
   );
   final TextFieldBloc newPassword = TextFieldBloc(
-    validators: [FieldBlocValidators.required, FieldBlocValidators.passwordMin6Chars],
+    validators: [
+      FieldBlocValidators.required,
+      FieldBlocValidators.passwordMin6Chars
+    ],
   );
 
   final AuthBloc authBloc;
@@ -34,8 +43,7 @@ class ChangePasswordFormBloc extends FormBloc<String, String> {
     try {
       logger.i('--- Wysłanie żądania zmiany hasła ---');
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/change-password'),
-        // Uri.parse('https://pilarz.dev/change-password'),
+        Uri.parse('$_baseUrl$_changePasswordEndpoint'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${authState.token}',
