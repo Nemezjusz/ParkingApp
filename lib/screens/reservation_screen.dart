@@ -1,4 +1,3 @@
-// reservation_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:smart_parking/blocs/reservation_form_bloc.dart';
@@ -9,8 +8,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/blocs/auth_state.dart';
 
-class ReservationScreen extends StatelessWidget {
+class ReservationScreen extends StatefulWidget {
   const ReservationScreen({super.key});
+
+  @override
+  _ReservationScreenState createState() => _ReservationScreenState();
+}
+
+class _ReservationScreenState extends State<ReservationScreen> {
+  final GlobalKey<YourReservationsSectionState> _reservationSectionKey =
+  GlobalKey<YourReservationsSectionState>();
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +68,8 @@ class ReservationScreen extends StatelessWidget {
                     backgroundColor: Colors.green,
                   ),
                 );
+                // Odśwież rezerwacje
+                _reservationSectionKey.currentState?.refreshReservations();
               },
               onFailure: (context, state) {
                 LoadingDialog.hide(context);
@@ -74,10 +83,10 @@ class ReservationScreen extends StatelessWidget {
               child: SafeArea(
                 child: ListView(
                   padding: const EdgeInsets.all(16.0),
-                  children: const [
-                    ReservationForm(),
-                    SizedBox(height: 20),
-                    YourReservationsSection(),
+                  children: [
+                    const ReservationForm(),
+                    const SizedBox(height: 20),
+                    YourReservationsSection(key: _reservationSectionKey),
                   ],
                 ),
               ),

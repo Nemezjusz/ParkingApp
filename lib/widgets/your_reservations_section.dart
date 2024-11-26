@@ -14,16 +14,19 @@ class YourReservationsSection extends StatefulWidget {
   const YourReservationsSection({super.key});
 
   @override
-  _YourReservationsSectionState createState() =>
-      _YourReservationsSectionState();
+  YourReservationsSectionState createState() => YourReservationsSectionState();
 }
 
-class _YourReservationsSectionState extends State<YourReservationsSection> {
+class YourReservationsSectionState extends State<YourReservationsSection> {
   late Future<List<Reservation>> reservations;
 
   @override
   void initState() {
     super.initState();
+    _loadReservations();
+  }
+
+  void _loadReservations() {
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
       reservations = ApiService.fetchUserReservations(authState.token).then(
@@ -32,6 +35,12 @@ class _YourReservationsSectionState extends State<YourReservationsSection> {
     } else {
       reservations = Future.value([]);
     }
+  }
+
+  void refreshReservations() {
+    setState(() {
+      _loadReservations();
+    });
   }
 
   @override
@@ -83,6 +92,7 @@ class _YourReservationsSectionState extends State<YourReservationsSection> {
                       startTime: reservation.startTime,
                       endTime: reservation.endTime,
                       color: _getColorByStatus(reservation.status),
+                      onReservationCancelled: refreshReservations,
                     );
                   } catch (e) {
                     return ReservationItem(
@@ -93,6 +103,7 @@ class _YourReservationsSectionState extends State<YourReservationsSection> {
                       startTime: reservation.startTime,
                       endTime: reservation.endTime,
                       color: _getColorByStatus(reservation.status),
+                      onReservationCancelled: refreshReservations,
                     );
                   }
                 },
