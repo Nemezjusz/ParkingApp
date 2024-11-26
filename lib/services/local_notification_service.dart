@@ -45,7 +45,6 @@ class LocalNotificationService {
   void selectNotification(NotificationResponse notificationResponse) {
     final payload = notificationResponse.payload;
     logger.i('--- Notification clicked with payload: $payload ---');
-    // Dodaj logikę przekierowania użytkownika na określony ekran
   }
 
   Future<void> showNotification(RemoteMessage message) async {
@@ -53,8 +52,8 @@ class LocalNotificationService {
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'your_channel_id', // ID kanału
-      'your_channel_name', // Nazwa kanału
+      'your_channel_id',
+      'your_channel_name',
       channelDescription: 'your_channel_description',
       importance: Importance.max,
       priority: Priority.high,
@@ -65,7 +64,7 @@ class LocalNotificationService {
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await _flutterLocalNotificationsPlugin.show(
-      0, // ID powiadomienia
+      0,
       message.notification?.title,
       message.notification?.body,
       platformChannelSpecifics,

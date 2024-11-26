@@ -136,7 +136,7 @@ class NotificationsSwitch extends StatefulWidget {
 }
 
 class _NotificationsSwitchState extends State<NotificationsSwitch> {
-  bool _isSubscribed = true; // Domyślnie powiadomienia są włączone
+  bool _isSubscribed = true;
 
   @override
   void initState() {

@@ -24,7 +24,6 @@ class _YourReservationsSectionState extends State<YourReservationsSection> {
     super.initState();
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
-      // Użycie fetchUserReservations z konwersją danych do modelu Reservation
       reservations = ApiService.fetchUserReservations(authState.token).then(
         (data) => data.map((json) => Reservation.fromJson(json)).toList(),
       );

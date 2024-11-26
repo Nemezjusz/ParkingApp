@@ -65,7 +65,7 @@ class ParkingMapView extends StatelessWidget {
         Expanded(
           flex: 2,
           child: Container(
-            color: Theme.of(context).colorScheme.surface, // Użyj motywu
+            color: Theme.of(context).colorScheme.surface,
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             child: AspectRatio(
               aspectRatio: 5 / 6,
