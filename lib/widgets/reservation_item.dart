@@ -7,30 +7,35 @@ import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/blocs/auth_state.dart';
 
 class ReservationItem extends StatelessWidget {
+  final String parkingSpotId;
   final String spot;
   final String status;
   final String date;
   final String startTime;
   final String endTime;
   final Color color;
+  final VoidCallback onReservationCancelled;
 
   const ReservationItem({
     super.key,
+    required this.parkingSpotId,
     required this.spot,
     required this.status,
     required this.date,
     required this.startTime,
     required this.endTime,
     required this.color,
+    required this.onReservationCancelled,
   });
 
-  void _cancelReservation(BuildContext context, String parkingSpotId) async {
+  void _cancelReservation(BuildContext context, String parkingSpotId,
+      String date, String startTime, String endTime, String spot) async {
     // Pokaż potwierdzenie
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cancel Reservation?'),
-        content: Text('Are you sure you want to cancel the reservation for spot $parkingSpotId?'),
+        content: Text('Are you sure you want to cancel the reservation for spot $spot?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -49,7 +54,7 @@ class ReservationItem extends StatelessWidget {
       try {
         final authState = context.read<AuthBloc>().state;
         if (authState is Authenticated) {
-          await ApiService.cancelReservation(parkingSpotId, authState.token);
+          await ApiService.cancelReservation(parkingSpotId, date, startTime, endTime, authState.token);
           LoadingDialog.hide(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -57,6 +62,7 @@ class ReservationItem extends StatelessWidget {
               backgroundColor: Colors.green,
             ),
           );
+          onReservationCancelled();
         } else {
           LoadingDialog.hide(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -113,14 +119,14 @@ class ReservationItem extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          'Date: $date\nStart time: $startTime - $endTime\nStatus: $status',
+          'Data: $date\nOkres rezerwacji: $startTime - $endTime\nStatus: $status',
           style: GoogleFonts.poppins(
             color: Colors.white70,
           ),
         ),
         trailing: IconButton(
           icon: const Icon(Icons.cancel, color: Colors.white, size: 30),
-          onPressed: () => _cancelReservation(context, spot),
+          onPressed: () => _cancelReservation(context, parkingSpotId, date, startTime, endTime, spot),
         ),
       ),
     );

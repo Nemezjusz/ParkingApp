@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:smart_parking/blocs/parking_spot_bloc.dart';
+import 'package:smart_parking/models/parking_spot.dart';
 import 'package:smart_parking/screens/profile_screen.dart';
 import 'package:smart_parking/screens/reservation_screen.dart';
 import 'package:smart_parking/widgets/custom_app_bar.dart';
@@ -8,7 +11,7 @@ import '../widgets/parking_spot_tile.dart';
 import 'package:smart_parking/constants/constants.dart';
 
 class ParkingMapScreen extends StatefulWidget {
-  const ParkingMapScreen({super.key});
+  const ParkingMapScreen({Key? key}) : super(key: key);
 
   @override
   _ParkingMapScreenState createState() => _ParkingMapScreenState();
@@ -17,11 +20,26 @@ class ParkingMapScreen extends StatefulWidget {
 class _ParkingMapScreenState extends State<ParkingMapScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    ParkingMapView(),
-    ReservationScreen(),
-    ProfileScreen(),
-  ];
+  late List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    final token = 'YOUR_TOKEN_HERE'; // Replace with actual token
+
+    _screens = [
+      BlocProvider<ParkingSpotBloc>(
+        create: (context) {
+          final bloc = ParkingSpotBloc(token: token);
+          bloc.add(FetchParkingSpots());
+          return bloc;
+        },
+        child: ParkingMapView(),
+      ),
+      ReservationScreen(),
+      ProfileScreen(),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -53,42 +71,94 @@ class _ParkingMapScreenState extends State<ParkingMapScreen> {
   }
 }
 
-// Ekran widoku mapy parkingowej
 class ParkingMapView extends StatelessWidget {
-  const ParkingMapView({super.key});
+  const ParkingMapView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    const Color parkingSpotAvailable = Colors.green;
+    const Color parkingSpotReserved = Colors.yellow;
+    const Color parkingSpotOccupied = Colors.red;
+
     return Column(
       children: [
         CustomTitle(icon: Icons.map, title: 'Company Parking Map'),
-        Expanded(
-          flex: 2,
-          child: Container(
-            color: Theme.of(context).colorScheme.surface,
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            child: AspectRatio(
-              aspectRatio: 5 / 6,
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 5,
-                  crossAxisSpacing: 15,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 3 / 5,
-                ),
-                itemCount: 20,
-                itemBuilder: (context, index) {
-                  String spotId = 'Spot ${index + 1}';
-                  Color spotColor = index % 3 == 0
-                      ? parkingSpotAvailable
-                      : (index % 3 == 1 ? parkingSpotReserved : parkingSpotOccupied);
-                  return ParkingSpotTile(id: spotId, color: spotColor);
-                },
-              ),
+        // Mapa parkingu - zawsze widoczna w całości
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+          child: AspectRatio(
+            aspectRatio: 5 / 6, // Ustalony stosunek dla widoku mapy
+            child: BlocBuilder<ParkingSpotBloc, ParkingSpotState>(
+              builder: (context, state) {
+                if (state is ParkingSpotLoading) {
+                  return Center(child: CircularProgressIndicator());
+                } else if (state is ParkingSpotLoaded) {
+                  // Pobierz miejsca parkingowe
+                  final parkingSpots = state.parkingSpots;
+
+                  // Posortuj parkingSpots na podstawie prettyId
+                  parkingSpots.sort((a, b) {
+                    final regex = RegExp(r'([A-Za-z]+)(\d+)');
+                    final matchA = regex.firstMatch(a.prettyId ?? '');
+                    final matchB = regex.firstMatch(b.prettyId ?? '');
+
+                    if (matchA != null && matchB != null) {
+                      final letterA = matchA.group(1)!;
+                      final numberA = int.tryParse(matchA.group(2)!) ?? 0;
+                      final letterB = matchB.group(1)!;
+                      final numberB = int.tryParse(matchB.group(2)!) ?? 0;
+
+                      if (letterA == letterB) {
+                        return numberA.compareTo(numberB);
+                      } else {
+                        return letterA.compareTo(letterB);
+                      }
+                    }
+                    return 0; // Wartość domyślna, jeśli nie pasuje
+                  });
+
+                  return GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(), // Wyłączenie przewijania mapy
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 5,
+                      crossAxisSpacing: 15,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 3 / 5,
+                    ),
+                    itemCount: parkingSpots.length,
+                    itemBuilder: (context, index) {
+                      final spot = parkingSpots[index];
+                      String spotId = spot.prettyId ?? 'Spot ${index + 1}';
+                      Color spotColor;
+                      if (spot.status == 'free') {
+                        spotColor = parkingSpotAvailable;
+                      } else if (spot.status == 'reserved') {
+                        spotColor = parkingSpotReserved;
+                      } else if (spot.status == 'occupied') {
+                        spotColor = parkingSpotOccupied;
+                      } else {
+                        spotColor = Colors.grey;
+                      }
+                      return ParkingSpotTile(id: spotId, color: spotColor);
+                    },
+                  );
+                } else if (state is ParkingSpotError) {
+                  return Center(child: Text('Error: ${state.message}'));
+                } else {
+                  return Center(child: Text('No data available'));
+                }
+              },
             ),
           ),
         ),
-        YourReservationsSection(),
+        const SizedBox(height: 16),
+        // Przewijalna sekcja rezerwacji
+        Expanded(
+          child: SingleChildScrollView(
+            child: YourReservationsSection(),
+          ),
+        ),
       ],
     );
   }

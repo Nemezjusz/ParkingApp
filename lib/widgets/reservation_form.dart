@@ -7,6 +7,7 @@ import 'package:smart_parking/blocs/reservation_form_bloc.dart';
 import 'package:smart_parking/blocs/parking_spot_bloc.dart';
 import 'package:smart_parking/models/parking_spot.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:intl/intl.dart';
 
 class ReservationForm extends StatelessWidget {
   const ReservationForm({super.key});
@@ -31,7 +32,9 @@ class ReservationForm extends StatelessWidget {
             if (state is ParkingSpotLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is ParkingSpotLoaded) {
-              final freeSpots = state.parkingSpots.where((spot) => spot.status == 'free').toList();
+              final freeSpots = state.parkingSpots
+                  .where((spot) => spot.status == 'free')
+                  .toList();
               if (freeSpots.isEmpty) {
                 return const Text('Brak dostępnych miejsc parkingowych.');
               }
@@ -40,7 +43,8 @@ class ReservationForm extends StatelessWidget {
                 itemAsString: (ParkingSpot spot) => spot.prettyId, // Użyj prettyId
                 onChanged: (ParkingSpot? selectedSpot) {
                   if (selectedSpot != null) {
-                    reservationFormBloc.parkingSpotId.updateValue(selectedSpot.id); // Użyj ID jako wartości
+                    reservationFormBloc.parkingSpotId
+                        .updateValue(selectedSpot.id); // Użyj ID jako wartości
                   }
                 },
                 selectedItem: freeSpots.first,
@@ -72,30 +76,40 @@ class ReservationForm extends StatelessWidget {
           onTap: () async {
             final DateTime? pickedDate = await showDatePicker(
               context: context,
-              initialDate: reservationFormBloc.reservationDate.value ?? DateTime.now(),
+              initialDate:
+              reservationFormBloc.reservationDate.value ?? DateTime.now(),
               firstDate: DateTime.now(),
               lastDate: DateTime.now().add(const Duration(days: 30)),
             );
             if (pickedDate != null) {
               reservationFormBloc.reservationDate.updateValue(pickedDate);
+              // Wymuszenie odświeżenia widoku
+              (context as Element).markNeedsBuild();
             }
           },
-          child: InputDecorator(
-            decoration: InputDecoration(
-              labelText: "Data Rezerwacji",
-              prefixIcon: const Icon(Icons.calendar_today),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              reservationFormBloc.reservationDate.value != null
-                  ? DateFormat('yyyy-MM-dd').format(reservationFormBloc.reservationDate.value!)
-                  : 'Wybierz datę',
-              style: TextStyle(
-                color: reservationFormBloc.reservationDate.value != null ? Colors.black : Colors.grey,
-              ),
-            ),
+          child: BlocBuilder<ReservationFormBloc, FormBlocState>(
+            builder: (context, state) {
+              return InputDecorator(
+                decoration: InputDecoration(
+                  labelText: "Data Rezerwacji",
+                  prefixIcon: const Icon(Icons.calendar_today),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  reservationFormBloc.reservationDate.value != null
+                      ? DateFormat('yyyy-MM-dd')
+                      .format(reservationFormBloc.reservationDate.value!)
+                      : 'Wybierz datę',
+                  style: TextStyle(
+                    color: reservationFormBloc.reservationDate.value != null
+                        ? Colors.black
+                        : Colors.grey,
+                  ),
+                ),
+              );
+            },
           ),
         ),
         const SizedBox(height: 16),

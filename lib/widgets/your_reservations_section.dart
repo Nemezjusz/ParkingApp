@@ -8,28 +8,39 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/blocs/auth_state.dart';
+import 'package:intl/intl.dart';
 
 class YourReservationsSection extends StatefulWidget {
   const YourReservationsSection({super.key});
 
   @override
-  _YourReservationsSectionState createState() => _YourReservationsSectionState();
+  YourReservationsSectionState createState() => YourReservationsSectionState();
 }
 
-class _YourReservationsSectionState extends State<YourReservationsSection> {
+class YourReservationsSectionState extends State<YourReservationsSection> {
   late Future<List<Reservation>> reservations;
 
   @override
   void initState() {
     super.initState();
+    _loadReservations();
+  }
+
+  void _loadReservations() {
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
       reservations = ApiService.fetchUserReservations(authState.token).then(
-        (data) => data.map((json) => Reservation.fromJson(json)).toList(),
+            (data) => data.map((json) => Reservation.fromJson(json)).toList(),
       );
     } else {
       reservations = Future.value([]);
     }
+  }
+
+  void refreshReservations() {
+    setState(() {
+      _loadReservations();
+    });
   }
 
   @override
@@ -68,14 +79,33 @@ class _YourReservationsSectionState extends State<YourReservationsSection> {
                 itemCount: snapshot.data!.length,
                 itemBuilder: (context, index) {
                   final reservation = snapshot.data![index];
-                  return ReservationItem(
-                    spot: reservation.parkingSpotId,
-                    status: reservation.status,
-                    date: reservation.date,
-                    startTime: reservation.startTime,
-                    endTime: reservation.endTime,
-                    color: _getColorByStatus(reservation.status),
-                  );
+                  try {
+                    final parsedDate = DateTime.parse(reservation.date);
+                    final formattedDate =
+                    DateFormat('dd-MM-yyyy').format(parsedDate);
+
+                    return ReservationItem(
+                      parkingSpotId: reservation.parkingSpotId,
+                      spot: reservation.parkingPrettyId,
+                      status: reservation.status,
+                      date: formattedDate,
+                      startTime: reservation.startTime,
+                      endTime: reservation.endTime,
+                      color: _getColorByStatus(reservation.status),
+                      onReservationCancelled: refreshReservations,
+                    );
+                  } catch (e) {
+                    return ReservationItem(
+                      parkingSpotId: reservation.parkingSpotId,
+                      spot: reservation.parkingPrettyId,
+                      status: reservation.status,
+                      date: reservation.date,
+                      startTime: reservation.startTime,
+                      endTime: reservation.endTime,
+                      color: _getColorByStatus(reservation.status),
+                      onReservationCancelled: refreshReservations,
+                    );
+                  }
                 },
               );
             }

@@ -77,21 +77,32 @@ class ApiService {
   }
 
   // Metoda do anulowania rezerwacji
-  static Future<void> cancelReservation(String parkingSpotId, String token) async {
+  static Future<void> cancelReservation(String parkingSpotId, String date, String startTime, String endTime, String token) async {
+    final formattedDate = DateFormat('yyyy-MM-dd').format(DateFormat('dd-MM-yyyy').parse(date));
+
+    final requestBody = {
+      'parking_spot_id': parkingSpotId,
+      'action': 'cancel',
+      'reservation_date': formattedDate,
+      'reservation_start_time': startTime,
+      'reservation_end_time': endTime,
+    };
+
+    // Logowanie wysyłanego ciała żądania
+    print("Sending request to $baseUrl/reserve with body: ${json.encode(requestBody)}");
+
     final response = await http.post(
       Uri.parse('$baseUrl/reserve'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: json.encode({
-        'parking_spot_id': parkingSpotId,
-        'action': 'cancel',
-        'reservation_date': '',
-        'start_time': '',
-        'end_time': '',
-      }),
+      body: json.encode(requestBody),
     );
+
+    // Logowanie odpowiedzi
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode != 200) {
       throw Exception('Failed to cancel reservation');
