@@ -156,25 +156,37 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
     if spot_status.status == "occupied":
         # sprawdza czy jest rezerwacja
         if reservation:
-            update_data["waiting_confirmation"] = True
-            update_data["color"] = "BLUE"  # jak czeka na potwierdzenie to zmienia na niebieski, ale nie musi
-
-            await reservations_col.update_one(
-                {"_id": reservation["_id"]},
-                {"$set": {
-                    "confirmation_deadline": datetime.now(timezone.utc) + timedelta(minutes=CONFIRMATION_TIMEOUT_MINUTES)
-                }}
-            )
+            current_time = datetime.now(timezone.utc)
+            if "confirmation_deadline" in reservation and current_time > reservation["confirmation_deadline"]:
+                update_data["color"] = "RED_BLINK"
+                update_data["waiting_confirmation"] = False
+            else:
+                update_data["waiting_confirmation"] = True
+                update_data["color"] = "BLUE"
+                
+                await reservations_col.update_one(
+                    {"_id": reservation["_id"]},
+                    {"$set": {
+                        "confirmation_deadline": datetime.now(timezone.utc) + timedelta(minutes=CONFIRMATION_TIMEOUT_MINUTES)
+                    }}
+                )
         else:
             update_data["color"] = "RED"
 
     elif reservation and spot_status.status == "free":
         update_data["color"] = "YELLOW"
         update_data["waiting_confirmation"] = False
+
+        await reservations_col.update_one(
+            {"_id": reservation["_id"]},
+            {"$unset": {"confirmation_deadline": ""}}
+        )
+
     else:
         update_data["waiting_confirmation"] = False
         update_data["color"] = "GREEN"
-    
+        
+
     await parking_spots_col.update_one(
         {"_id": ObjectId(spot_status.parking_spot_id)},
         {"$set": update_data}
