@@ -8,11 +8,15 @@ import 'firebase_options.dart';
 import 'package:smart_parking/services/push_notification_service.dart';
 import 'package:smart_parking/services/local_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:smart_parking/blocs/parking_spot_bloc.dart';
+import 'package:smart_parking/blocs/auth_state.dart';
+import 'package:smart_parking/services/parking_status_polling_service.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:smart_parking/blocs/parking_spot_bloc.dart';
 
 final Logger logger = Logger();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
@@ -36,8 +40,8 @@ void main() async {
 
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  PushNotificationService pushNotificationService = PushNotificationService();
-  await pushNotificationService.initialize();
+  // PushNotificationService pushNotificationService = PushNotificationService();
+  // await pushNotificationService.initialize();
 
   LocalNotificationService localNotificationService =
       LocalNotificationService();
@@ -47,7 +51,19 @@ void main() async {
     MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(),
+          create: (context) {
+            final authBloc = AuthBloc();
+            authBloc.stream.listen((state) {
+              if (state is Authenticated) {
+                final parkingService = ParkingStatusPollingService(
+                  token: state.token!,
+                  context: navigatorKey.currentState!.context,
+                );
+                parkingService.initialize();
+              }
+            });
+            return authBloc;
+          },
         ),
         BlocProvider<ThemeBloc>(
           create: (context) => ThemeBloc(),
@@ -70,6 +86,7 @@ class SmartParkingApp extends StatelessWidget {
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
         return MaterialApp(
+          navigatorKey: navigatorKey, // Dodano klucz globalny
           title: 'Smart Parking',
           debugShowCheckedModeBanner: false,
           theme: themeState.themeData,

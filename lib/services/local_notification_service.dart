@@ -1,6 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter/material.dart';
 
 class LocalNotificationService {
   static final LocalNotificationService _instance =
@@ -46,16 +46,21 @@ class LocalNotificationService {
   void selectNotification(NotificationResponse notificationResponse) {
     final payload = notificationResponse.payload;
     logger.i('--- Notification clicked with payload: $payload ---');
+    // Tutaj można obsłużyć kliknięcie powiadomienia
   }
 
-  Future<void> showNotification(RemoteMessage message) async {
-    logger.i('--- Showing notification for message: ${message.messageId} ---');
+  Future<void> showCustomNotification({
+    required String title,
+    required String body,
+    required String payload,
+  }) async {
+    logger.i('--- Showing custom notification ---');
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'your_channel_id',
-      'your_channel_name',
-      channelDescription: 'your_channel_description',
+      'parking_channel',
+      'Parking Notifications',
+      channelDescription: 'Notification about parking spot changes',
       importance: Importance.max,
       priority: Priority.high,
       ticker: 'ticker',
@@ -66,12 +71,12 @@ class LocalNotificationService {
 
     await _flutterLocalNotificationsPlugin.show(
       0,
-      message.notification?.title,
-      message.notification?.body,
+      title,
+      body,
       platformChannelSpecifics,
-      payload: 'Default_Sound',
+      payload: payload,
     );
 
-    logger.i('--- Notification displayed successfully ---');
+    logger.i('--- Custom notification displayed successfully ---');
   }
 }

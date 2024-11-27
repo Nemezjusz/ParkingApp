@@ -181,12 +181,12 @@ class _NotificationsSwitchState extends State<NotificationsSwitch> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isSubscribed', value);
 
-    PushNotificationService pushService = PushNotificationService();
-    if (value) {
-      pushService.subscribeToTopic('all');
-    } else {
-      pushService.unsubscribeFromTopic('all');
-    }
+    // PushNotificationService pushService = PushNotificationService();
+    // if (value) {
+    //   pushService.subscribeToTopic('all');
+    // } else {
+    //   pushService.unsubscribeFromTopic('all');
+    // }
   }
 
   @override
