@@ -8,18 +8,13 @@ class ReservationFormBloc extends FormBloc<String, String> {
   final Logger logger = Logger();
 
   // Fields
-  final parkingSpotId =
-      TextFieldBloc(validators: [FieldBlocValidators.required]);
+  final parkingSpotId = TextFieldBloc(); // Pole miejsca parkingowego
   final reservationDate = InputFieldBloc<DateTime, Object>(
-    validators: [FieldBlocValidators.required],
-    initialValue: DateTime.now(),
+    initialValue: DateTime.now(), // Obecna data jako wartość początkowa
   );
-  final startTime = TextFieldBloc(validators: [FieldBlocValidators.required]);
-  final endTime = TextFieldBloc(validators: [FieldBlocValidators.required]);
 
   ReservationFormBloc({required this.token}) {
-    addFieldBlocs(
-        fieldBlocs: [parkingSpotId, reservationDate, startTime, endTime]);
+    addFieldBlocs(fieldBlocs: [parkingSpotId, reservationDate]);
   }
 
   @override
@@ -27,39 +22,32 @@ class ReservationFormBloc extends FormBloc<String, String> {
     logger.i('--- ReservationFormBloc: onSubmitting started ---');
 
     try {
-      // Extract and validate field values
       final parkingSpotIdValue = parkingSpotId.value;
       final dateValue = reservationDate.value;
-      final startTimeValue = startTime.value;
-      final endTimeValue = endTime.value;
 
       logger.i('Parking Spot ID: $parkingSpotIdValue');
       logger.i('Reservation Date: $dateValue');
-      logger.i('Start Time: $startTimeValue');
-      logger.i('End Time: $endTimeValue');
 
-      if (!_isTimeValid(startTimeValue, endTimeValue)) {
-        emitFailure(
-            failureResponse:
-                "Godzina zakończenia musi być późniejsza niż godzina rozpoczęcia.");
+      // Walidacja wartości ParkingSpotId
+      if (parkingSpotIdValue.isEmpty) {
+        logger.w('Parking spot ID is empty. Aborting submission.');
+        emitFailure(failureResponse: "Wybierz miejsce parkingowe!");
         return;
       }
 
-      // Check internet connection
+      // Sprawdź połączenie internetowe
       logger.i('Checking internet connection...');
       if (!await _hasInternetConnection()) {
         emitFailure(failureResponse: "Brak połączenia z internetem!");
         return;
       }
 
-      // Send reservation
+      // Wyślij rezerwację
       logger.i('Sending reservation to backend...');
       await ApiService.reserveParkingSpot(
         parkingSpotId: parkingSpotIdValue,
         action: 'reserve',
         date: dateValue,
-        startTime: startTimeValue,
-        endTime: endTimeValue,
         token: token,
       );
       logger.i('Reservation sent successfully.');
@@ -74,24 +62,6 @@ class ReservationFormBloc extends FormBloc<String, String> {
     }
   }
 
-  // Validate start and end times
-  bool _isTimeValid(String startTime, String endTime) {
-    try {
-      final startParts = startTime.split(':').map(int.parse).toList();
-      final endParts = endTime.split(':').map(int.parse).toList();
-
-      final startMinutes = startParts[0] * 60 + startParts[1];
-      final endMinutes = endParts[0] * 60 + endParts[1];
-
-      logger.d('Start Minutes: $startMinutes, End Minutes: $endMinutes');
-      return endMinutes > startMinutes;
-    } catch (e) {
-      logger.w('Invalid time format: $e');
-      return false;
-    }
-  }
-
-  // Check for internet connection
   Future<bool> _hasInternetConnection() async {
     try {
       return await InternetConnection().hasInternetAccess;

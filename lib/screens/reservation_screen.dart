@@ -17,7 +17,7 @@ class ReservationScreen extends StatefulWidget {
 
 class _ReservationScreenState extends State<ReservationScreen> {
   final GlobalKey<YourReservationsSectionState> _reservationSectionKey =
-      GlobalKey<YourReservationsSectionState>();
+  GlobalKey<YourReservationsSectionState>();
 
   @override
   Widget build(BuildContext context) {

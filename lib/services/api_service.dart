@@ -82,8 +82,7 @@ class ApiService {
     }
   }
 
-  static Future<void> cancelReservation(String parkingSpotId, String date,
-      String startTime, String endTime, String token) async {
+  static Future<void> cancelReservation(String parkingSpotId, String date, String token) async {
     final formattedDate =
         DateFormat('yyyy-MM-dd').format(DateFormat('dd-MM-yyyy').parse(date));
 
@@ -91,8 +90,8 @@ class ApiService {
       'parking_spot_id': parkingSpotId,
       'action': 'cancel',
       'reservation_date': formattedDate,
-      'reservation_start_time': startTime,
-      'reservation_end_time': endTime,
+      'reservation_start_time': "",
+      'reservation_end_time': "",
     };
 
     logger.d(
@@ -126,8 +125,6 @@ class ApiService {
     required String parkingSpotId,
     required String action,
     required DateTime date,
-    required String startTime,
-    required String endTime,
     required String token,
   }) async {
     final String formattedDate = DateFormat('yyyy-MM-dd').format(date);
@@ -135,8 +132,6 @@ class ApiService {
       'parking_spot_id': parkingSpotId,
       "action": action,
       'reservation_date': formattedDate,
-      "reservation_start_time": formatTime(startTime),
-      "reservation_end_time": formatTime(endTime),
     };
 
     logger.d('Body before sending: $body');

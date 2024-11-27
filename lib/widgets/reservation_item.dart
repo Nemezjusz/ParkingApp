@@ -11,8 +11,6 @@ class ReservationItem extends StatelessWidget {
   final String spot;
   final String status;
   final String date;
-  final String startTime;
-  final String endTime;
   final Color color;
   final VoidCallback onReservationCancelled;
 
@@ -22,14 +20,12 @@ class ReservationItem extends StatelessWidget {
     required this.spot,
     required this.status,
     required this.date,
-    required this.startTime,
-    required this.endTime,
     required this.color,
     required this.onReservationCancelled,
   });
 
   void _cancelReservation(BuildContext context, String parkingSpotId,
-      String date, String startTime, String endTime, String spot) async {
+      String date, String spot) async {
     // Pokaż potwierdzenie
     bool? confirm = await showDialog<bool>(
       context: context,
@@ -56,7 +52,7 @@ class ReservationItem extends StatelessWidget {
         final authState = context.read<AuthBloc>().state;
         if (authState is Authenticated) {
           await ApiService.cancelReservation(
-              parkingSpotId, date, startTime, endTime, authState.token);
+              parkingSpotId, date, authState.token);
           LoadingDialog.hide(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -114,14 +110,14 @@ class ReservationItem extends StatelessWidget {
       child: ListTile(
         leading: Icon(statusIcon, color: Colors.white, size: 30),
         title: Text(
-          'Miejsce: $spot',
+          'Spot: $spot',
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
         subtitle: Text(
-          'Data: $date\nOkres rezerwacji: $startTime - $endTime\nStatus: $status',
+          'Date: $date\nStatus: $status',
           style: GoogleFonts.poppins(
             color: Colors.white70,
           ),
@@ -129,7 +125,7 @@ class ReservationItem extends StatelessWidget {
         trailing: IconButton(
           icon: const Icon(Icons.cancel, color: Colors.white, size: 30),
           onPressed: () => _cancelReservation(
-              context, parkingSpotId, date, startTime, endTime, spot),
+              context, parkingSpotId, date, spot),
         ),
       ),
     );
