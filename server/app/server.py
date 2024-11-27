@@ -248,16 +248,16 @@ async def confirm_parking(
     
     return {"message": "Parking confirmed successfully"}
 
-def parse_time(time_str):
-    """
-    Parsuje czas w formacie hh:mm na obiekt datetime.time.
-    """
-    if isinstance(time_str, time):
-        return time_str  # Już jest sparsowany
-    try:
-        return datetime.strptime(time_str, "%H:%M").time()
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid time format. Use hh:mm.")
+# def parse_time(time_str):
+#     """
+#     Parsuje czas w formacie hh:mm na obiekt datetime.time.
+#     """
+#     if isinstance(time_str, time):
+#         return time_str  # Już jest sparsowany
+#     try:
+#         return datetime.strptime(time_str, "%H:%M").time()
+#     except ValueError:
+#         raise HTTPException(status_code=400, detail="Invalid time format. Use hh:mm.")
 
 def serialize_dates(doc):
     for key, value in doc.items():
@@ -340,7 +340,7 @@ async def reserve_parking_spot(
                 }}
             )
             return {"message": "Parking spot reserved", "color": "YELLOW"}
-        return {"message": "Parking spot reserved", "color": "GREEN"}
+        return {"message": "Parking not spot reserved", "color": "GREEN"}
 
     elif reservation.action == "cancel":
         active_reservation = await reservations_col.find_one({
@@ -364,8 +364,8 @@ async def reserve_parking_spot(
                 "color": "GREEN",
                 "reserved_user_id": None,
                 "reservation_date": None,
-                "start_time": None,
-                "end_time": None,
+                # "start_time": None,
+                # "end_time": None,
                 # "reserved_by": None
             }}
         )
@@ -439,8 +439,7 @@ async def get_user_reservations(current_user: dict = Depends(get_current_user)):
 @app.get("/reservations_all")
 async def get_reservations():
     """
-    Pobiera aktywne rezerwacje dla obecnie zalogowanego użytkownika.
-    Dodaje pole `pretty_id` z kolekcji parking_spots.
+    Pobiera aktywne rezerwacje dla wszystkich użytkowników we wszystkie dni.
     """
     reservations = []
     cursor = reservations_col.find({})
