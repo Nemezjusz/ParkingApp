@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 
 class LoadingDialog extends StatelessWidget {
   static void show(BuildContext context, {Key? key}) => showDialog<void>(
@@ -19,26 +18,41 @@ class LoadingDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return WillPopScope(
       onWillPop: () async => false,
       child: Center(
         child: Card(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 8,
           child: Container(
-            width: 150,
-            height: 150,
-            padding: const EdgeInsets.all(20.0),
+            width: 120,
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                colors: [theme.colorScheme.primary.withOpacity(0.2), theme.colorScheme.primary.withOpacity(0.1)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Dodanie animacji Lottie
-                Lottie.asset('assets/animations/car-loading.json',
-                    width: 180, height: 180, repeat: true),
-                const SizedBox(height: 20),
-                const Text(
-                  'Proszę czekać...',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                const CircularProgressIndicator(
+                  strokeWidth: 3.0,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Loading...",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                  ),
                 ),
               ],
             ),
