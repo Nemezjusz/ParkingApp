@@ -23,6 +23,9 @@ class InputWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Pobranie aktualnego motywu
+    final theme = Theme.of(context);
+
     return TextFieldBlocBuilder(
       textFieldBloc: fieldBloc,
       autofocus: false,
@@ -32,14 +35,40 @@ class InputWidget extends StatelessWidget {
       obscureText: obscureText,
       decoration: InputDecoration(
         hintText: hintText,
-        prefixIcon: Icon(prefixIcon),
+        prefixIcon: Icon(
+          prefixIcon,
+          color: theme.colorScheme.primary,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary.withOpacity(0.5),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+            width: 2.0,
+          ),
         ),
         filled: true,
-        fillColor: Colors.grey.shade100,
+        fillColor: theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceVariant,
+        hintStyle: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.onSurface.withOpacity(0.6),
+        ),
       ),
-      style: const TextStyle(fontSize: 16),
+      style: theme.textTheme.bodyMedium?.copyWith(
+        color: theme.colorScheme.onSurface,
+        fontSize: 16,
+      ),
+      cursorColor: theme.colorScheme.primary,
     );
   }
 }

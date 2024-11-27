@@ -102,8 +102,6 @@ class YourReservationsSectionState extends State<YourReservationsSection> {
                       spot: reservation.parkingPrettyId,
                       status: reservation.status,
                       date: formattedDate,
-                      startTime: reservation.startTime,
-                      endTime: reservation.endTime,
                       color: _getColorByStatus(reservation.status),
                       onReservationCancelled: refreshReservations,
                     );
@@ -113,8 +111,6 @@ class YourReservationsSectionState extends State<YourReservationsSection> {
                       spot: reservation.parkingPrettyId,
                       status: reservation.status,
                       date: reservation.date,
-                      startTime: reservation.startTime,
-                      endTime: reservation.endTime,
                       color: _getColorByStatus(reservation.status),
                       onReservationCancelled: refreshReservations,
                     );
