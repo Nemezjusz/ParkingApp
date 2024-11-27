@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 
-class InputWidget extends StatelessWidget {
+class InputWidget extends StatefulWidget {
   final String hintText;
   final IconData prefixIcon;
   final TextFieldBloc fieldBloc;
@@ -22,23 +22,50 @@ class InputWidget extends StatelessWidget {
   });
 
   @override
+  _InputWidgetState createState() => _InputWidgetState();
+}
+
+class _InputWidgetState extends State<InputWidget> {
+  late bool _obscureText;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.obscureText;
+  }
+
+  void _toggleObscureText() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Pobranie aktualnego motywu
     final theme = Theme.of(context);
 
     return TextFieldBlocBuilder(
-      textFieldBloc: fieldBloc,
+      textFieldBloc: widget.fieldBloc,
       autofocus: false,
-      readOnly: isReadOnly,
-      autofillHints: autofillHints,
-      keyboardType: textInputType,
-      obscureText: obscureText,
+      readOnly: widget.isReadOnly,
+      autofillHints: widget.autofillHints,
+      keyboardType: widget.textInputType,
+      obscureText: _obscureText,
       decoration: InputDecoration(
-        hintText: hintText,
+        hintText: widget.hintText,
         prefixIcon: Icon(
-          prefixIcon,
+          widget.prefixIcon,
           color: theme.colorScheme.primary,
         ),
+        suffixIcon: widget.obscureText
+            ? IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility_off : Icons.visibility,
+                  color: theme.colorScheme.primary.withOpacity(0.7),
+                ),
+                onPressed: _toggleObscureText,
+              )
+            : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
@@ -59,7 +86,8 @@ class InputWidget extends StatelessWidget {
           ),
         ),
         filled: true,
-        fillColor: theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceVariant,
+        fillColor:
+            theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceVariant,
         hintStyle: theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurface.withOpacity(0.6),
         ),
@@ -72,3 +100,4 @@ class InputWidget extends StatelessWidget {
     );
   }
 }
+

@@ -9,9 +9,14 @@ import 'package:smart_parking/widgets/primary_button.dart';
 import 'package:smart_parking/screens/parking_map_screen.dart';
 import 'package:smart_parking/constants/constants.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -25,9 +30,6 @@ class LoginScreen extends StatelessWidget {
             body: FormBlocListener<LoginFormBloc, String, String>(
               onSubmitting: (context, state) {
                 LoadingDialog.show(context);
-              },
-              onSubmissionFailed: (context, state) {
-                LoadingDialog.hide(context);
               },
               onSuccess: (context, state) {
                 LoadingDialog.hide(context);
@@ -47,14 +49,17 @@ class LoginScreen extends StatelessWidget {
               onFailure: (context, state) {
                 LoadingDialog.hide(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      state.failureResponse!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onError,
-                          ),
-                    ),
-                    backgroundColor: Theme.of(context).colorScheme.error,
+                  SnackBar(content: Text(state.failureResponse!)),
+                );
+              },
+              onLoading: (context, state) {
+                LoadingDialog.show(context);
+              },
+              onSubmissionFailed: (context, state) {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Check your credentials and try again!"),
                   ),
                 );
               },
