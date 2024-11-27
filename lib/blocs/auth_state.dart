@@ -1,8 +1,9 @@
 abstract class AuthState {
   final bool isAuthenticated;
   final String? token;
+  final String? userEmail;
 
-  const AuthState({required this.isAuthenticated, this.token});
+  const AuthState({required this.isAuthenticated, this.token, this.userEmail});
 }
 
 class AuthInitial extends AuthState {
@@ -10,9 +11,10 @@ class AuthInitial extends AuthState {
 }
 
 class Authenticated extends AuthState {
-  @override
-  final String token;
-  const Authenticated(this.token) : super(isAuthenticated: true, token: token);
+  final String userEmail;
+
+  const Authenticated(String token, this.userEmail)
+      : super(isAuthenticated: true, token: token, userEmail: userEmail);
 }
 
 class Unauthenticated extends AuthState {

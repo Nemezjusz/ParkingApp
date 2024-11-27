@@ -6,7 +6,6 @@ import 'package:smart_parking/blocs/reservation_form_bloc.dart';
 import 'package:smart_parking/blocs/parking_spot_bloc.dart';
 import 'package:smart_parking/models/parking_spot.dart';
 import 'package:dropdown_search/dropdown_search.dart';
-import 'package:intl/intl.dart';
 
 class ReservationForm extends StatelessWidget {
   const ReservationForm({super.key});

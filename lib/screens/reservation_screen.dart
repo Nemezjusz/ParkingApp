@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:smart_parking/blocs/reservation_form_bloc.dart';
 import 'package:smart_parking/widgets/dialogs/loading_dialog.dart';
-import 'package:smart_parking/widgets/your_reservations_section.dart';
+import 'package:smart_parking/widgets/reservations_section.dart';
 import 'package:smart_parking/widgets/reservation_form.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/blocs/auth_state.dart';
+import 'package:smart_parking/services/api_service.dart';
+import 'package:smart_parking/blocs/parking_spot_bloc.dart';
 
 class ReservationScreen extends StatefulWidget {
   const ReservationScreen({super.key});
@@ -16,8 +18,10 @@ class ReservationScreen extends StatefulWidget {
 }
 
 class _ReservationScreenState extends State<ReservationScreen> {
-  final GlobalKey<YourReservationsSectionState> _reservationSectionKey =
-  GlobalKey<YourReservationsSectionState>();
+  void refreshReservations() {
+    setState(() {});
+    context.read<ParkingSpotBloc>().add(FetchParkingSpots());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +29,25 @@ class _ReservationScreenState extends State<ReservationScreen> {
     if (authState is! Authenticated) {
       return Scaffold(
         body: Center(
-          child: Text('You need to be logged in to make a reservation'),
+          child: Text(
+            'You need to be logged in to make a reservation',
+            style: GoogleFonts.poppins(fontSize: 16),
+          ),
         ),
       );
     }
-    final token = authState.token;
+    final String token = authState.token!;
 
-    return BlocProvider(
-      create: (context) => ReservationFormBloc(token: token),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ReservationFormBloc>(
+          create: (context) => ReservationFormBloc(token: token),
+        ),
+        BlocProvider<ParkingSpotBloc>(
+          create: (context) =>
+              ParkingSpotBloc(token: token)..add(FetchParkingSpots()),
+        ),
+      ],
       child: Builder(
         builder: (context) {
           return Scaffold(
@@ -69,8 +84,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
                     backgroundColor: Colors.green,
                   ),
                 );
-                // Odśwież rezerwacje
-                _reservationSectionKey.currentState?.refreshReservations();
+                refreshReservations();
+                context.read<ParkingSpotBloc>().add(FetchParkingSpots());
               },
               onFailure: (context, state) {
                 LoadingDialog.hide(context);
@@ -87,7 +102,13 @@ class _ReservationScreenState extends State<ReservationScreen> {
                   children: [
                     const ReservationForm(),
                     const SizedBox(height: 20),
-                    YourReservationsSection(key: _reservationSectionKey),
+                    ReservationsSection(
+                      fetchReservations: () =>
+                          ApiService.fetchUserReservations(token),
+                      title: 'Your Reservations',
+                      icon: Icons.calendar_today,
+                      onRefresh: refreshReservations,
+                    ),
                   ],
                 ),
               ),

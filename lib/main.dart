@@ -8,10 +8,9 @@ import 'firebase_options.dart';
 import 'package:smart_parking/services/push_notification_service.dart';
 import 'package:smart_parking/services/local_notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:smart_parking/blocs/parking_spot_bloc.dart';
-import 'package:smart_parking/blocs/auth_state.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:smart_parking/blocs/parking_spot_bloc.dart';
 
 final Logger logger = Logger();
 
@@ -54,15 +53,8 @@ void main() async {
           create: (context) => ThemeBloc(),
         ),
         BlocProvider<ParkingSpotBloc>(
-          create: (context) {
-            final authState = context.read<AuthBloc>().state;
-            if (authState is Authenticated) {
-              return ParkingSpotBloc(token: authState.token)
-                ..add(FetchParkingSpots());
-            } else {
-              throw Exception("User not authenticated");
-            }
-          },
+          create: (context) =>
+              ParkingSpotBloc(token: '')..add(FetchParkingSpots()),
         ),
       ],
       child: const SmartParkingApp(),

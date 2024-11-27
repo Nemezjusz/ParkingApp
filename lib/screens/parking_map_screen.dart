@@ -8,8 +8,9 @@ import 'package:smart_parking/screens/profile_screen.dart';
 import 'package:smart_parking/screens/reservation_screen.dart';
 import 'package:smart_parking/widgets/custom_app_bar.dart';
 import 'package:smart_parking/widgets/custom_title.dart';
-import 'package:smart_parking/widgets/your_reservations_section.dart';
+import 'package:smart_parking/widgets/reservations_section.dart';
 import '../widgets/parking_spot_tile.dart';
+import 'package:smart_parking/services/api_service.dart';
 
 class ParkingMapScreen extends StatefulWidget {
   const ParkingMapScreen({Key? key}) : super(key: key);
@@ -21,6 +22,11 @@ class ParkingMapScreen extends StatefulWidget {
 class _ParkingMapScreenState extends State<ParkingMapScreen> {
   int _selectedIndex = 0;
 
+  void refreshReservations() {
+    setState(() {});
+    context.read<ParkingSpotBloc>().add(FetchParkingSpots());
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
@@ -30,31 +36,28 @@ class _ParkingMapScreenState extends State<ParkingMapScreen> {
           Future.microtask(() {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => LoginScreen()),
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
             );
           });
-          return Scaffold(
+          return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        final token = authState.token!;
+        final String token = (authState as Authenticated).token!;
 
         final List<Widget> _screens = [
           BlocProvider<ParkingSpotBloc>(
-            create: (context) {
-              final bloc = ParkingSpotBloc(token: token);
-              bloc.add(FetchParkingSpots());
-              return bloc;
-            },
-            child: ParkingMapView(),
+            create: (context) =>
+                ParkingSpotBloc(token: token)..add(FetchParkingSpots()),
+            child: const ParkingMapView(),
           ),
-          ReservationScreen(),
-          ProfileScreen(),
+          const ReservationScreen(),
+          const ProfileScreen(),
         ];
 
         return Scaffold(
-          appBar: CustomAppBar(title: "Smart Parking"),
+          appBar: const CustomAppBar(title: "Smart Parking"),
           body: _screens[_selectedIndex],
           bottomNavigationBar: BottomNavigationBar(
             type: BottomNavigationBarType.fixed,
@@ -95,21 +98,23 @@ class ParkingMapView extends StatelessWidget {
     const Color parkingSpotReserved = Colors.yellow;
     const Color parkingSpotOccupied = Colors.red;
 
+    final authState = context.read<AuthBloc>().state;
+    final String token = (authState as Authenticated).token!;
+
     return Column(
       children: [
-        CustomTitle(icon: Icons.map, title: 'Company Parking Map'),
+        const CustomTitle(icon: Icons.map, title: 'Company Parking Map'),
         // Mapa parkingu - zawsze widoczna w całości
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
           child: AspectRatio(
-            aspectRatio: 5 / 6, // Ustalony stosunek dla widoku mapy
+            aspectRatio: 5 / 6,
             child: BlocBuilder<ParkingSpotBloc, ParkingSpotState>(
               builder: (context, state) {
                 if (state is ParkingSpotLoading) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 } else if (state is ParkingSpotLoaded) {
-                  // Pobierz miejsca parkingowe
                   final parkingSpots = state.parkingSpots;
 
                   // Posortuj parkingSpots na podstawie prettyId
@@ -130,12 +135,11 @@ class ParkingMapView extends StatelessWidget {
                         return letterA.compareTo(letterB);
                       }
                     }
-                    return 0; // Wartość domyślna, jeśli nie pasuje
+                    return 0;
                   });
 
                   return GridView.builder(
-                    physics:
-                        const NeverScrollableScrollPhysics(), // Wyłączenie przewijania mapy
+                    physics: const NeverScrollableScrollPhysics(),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 5,
@@ -148,11 +152,11 @@ class ParkingMapView extends StatelessWidget {
                       final spot = parkingSpots[index];
                       String spotId = spot.prettyId ?? 'Spot ${index + 1}';
                       Color spotColor;
-                      if (spot.status == 'free') {
+                      if (spot.status.toLowerCase() == 'free') {
                         spotColor = parkingSpotAvailable;
-                      } else if (spot.status == 'reserved') {
+                      } else if (spot.status.toLowerCase() == 'reserved') {
                         spotColor = parkingSpotReserved;
-                      } else if (spot.status == 'occupied') {
+                      } else if (spot.status.toLowerCase() == 'occupied') {
                         spotColor = parkingSpotOccupied;
                       } else {
                         spotColor = Colors.grey;
@@ -163,17 +167,23 @@ class ParkingMapView extends StatelessWidget {
                 } else if (state is ParkingSpotError) {
                   return Center(child: Text('Error: ${state.message}'));
                 } else {
-                  return Center(child: Text('No data available'));
+                  return const Center(child: Text('No data available'));
                 }
               },
             ),
           ),
         ),
         const SizedBox(height: 16),
-        // Przewijalna sekcja rezerwacji
         Expanded(
           child: SingleChildScrollView(
-            child: YourReservationsSection(),
+            child: ReservationsSection(
+              fetchReservations: () => ApiService.fetchAllReservations(token),
+              title: 'All Reservations',
+              icon: Icons.list,
+              onRefresh: () {
+                context.read<ParkingSpotBloc>().add(FetchParkingSpots());
+              },
+            ),
           ),
         ),
       ],

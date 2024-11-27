@@ -1,22 +1,28 @@
 class Reservation {
+  final String id;
   final String parkingSpotId;
-  final String parkingPrettyId;
+  final String prettyId;
+  final String reservationDate;
   final String status;
-  final String date;
+  final String? reservedBy;
 
   Reservation({
+    required this.id,
     required this.parkingSpotId,
-    required this.parkingPrettyId,
+    required this.prettyId,
+    required this.reservationDate,
     required this.status,
-    required this.date,
+    this.reservedBy,
   });
 
   factory Reservation.fromJson(Map<String, dynamic> json) {
     return Reservation(
-      parkingSpotId: json['parking_spot_id'] as String,
-      parkingPrettyId: json['pretty_id'] as String,
-      status: json['status'] as String,
-      date: json['reservation_date'] as String,
+      id: json['id'],
+      parkingSpotId: json['parking_spot_id'],
+      prettyId: json['pretty_id'],
+      reservationDate: json['reservation_date'],
+      status: json['status'],
+      reservedBy: json['reserved_by'],
     );
   }
 }

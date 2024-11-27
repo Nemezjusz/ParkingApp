@@ -4,13 +4,17 @@ import 'package:smart_parking/models/parking_spot.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:smart_parking/models/reservation.dart';
 
 class ApiService {
   static final String _baseUrl =
       dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8000';
-  static final String _loginEndpoint = dotenv.env['LOGIN_ENDPOINT'] ?? '/login';
+  static final String _loginEndpoint =
+      dotenv.env['LOGIN_ENDPOINT'] ?? '/login';
   static final String _reservationsEndpoint =
       dotenv.env['RESERVATIONS_ENDPOINT'] ?? '/reservations';
+  static final String _reservationsAllEndpoint =
+      dotenv.env['RESERVATIONS_ALL_ENDPOINT'] ?? '/reservations_all';
   static final String _parkingStatusEndpoint =
       dotenv.env['PARKING_STATUS_ENDPOINT'] ?? '/parking_status';
   static final String _reserveEndpoint =
@@ -18,7 +22,8 @@ class ApiService {
 
   static final Logger logger = Logger();
 
-  static Future<Map<String, dynamic>> login({
+  // Metoda do logowania
+  static Future<String> login({
     required String email,
     required String password,
   }) async {
@@ -34,14 +39,14 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      return response.body;
     } else {
       throw Exception('Failed to login: ${response.body}');
     }
   }
 
-  static Future<List<Map<String, dynamic>>> fetchUserReservations(
-      String token) async {
+  // Metoda do pobierania rezerwacji użytkownika
+  static Future<List<Reservation>> fetchUserReservations(String token) async {
     final response = await http.get(
       Uri.parse('$_baseUrl$_reservationsEndpoint'),
       headers: {
@@ -49,18 +54,40 @@ class ApiService {
       },
     );
 
-    logger.d('Fetching reservations with token: $token');
+    // logger.d('Fetching reservations with token: $token');
     logger.d('API Response Status: ${response.statusCode}');
     logger.d('API Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
       final List<dynamic> reservations = json.decode(response.body);
-      return reservations.map((r) => r as Map<String, dynamic>).toList();
+      return reservations.map((r) => Reservation.fromJson(r)).toList();
     } else {
       throw Exception('Failed to fetch reservations: ${response.body}');
     }
   }
 
+  // Metoda do pobierania wszystkich rezerwacji
+  static Future<List<Reservation>> fetchAllReservations(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl$_reservationsAllEndpoint'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    // logger.d('Fetching all reservations with token: $token');
+    logger.d('API Response Status: ${response.statusCode}');
+    logger.d('API Response Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> reservations = json.decode(response.body);
+      return reservations.map((r) => Reservation.fromJson(r)).toList();
+    } else {
+      throw Exception('Failed to fetch all reservations: ${response.body}');
+    }
+  }
+
+  // Metoda do pobierania statusu parkingów
   static Future<List<ParkingSpot>> getParkingStatus(String token) async {
     final response = await http.get(
       Uri.parse('$_baseUrl$_parkingStatusEndpoint'),
@@ -70,7 +97,7 @@ class ApiService {
       },
     );
 
-    logger.d('Fetching parking status with token: $token');
+    // logger.d('Fetching parking status with token: $token');
     logger.d('API Response Status: ${response.statusCode}');
     logger.d('API Response Body: ${response.body}');
 
@@ -82,14 +109,13 @@ class ApiService {
     }
   }
 
-  static Future<void> cancelReservation(String parkingSpotId, String date, String token) async {
-    final formattedDate =
-        DateFormat('yyyy-MM-dd').format(DateFormat('dd-MM-yyyy').parse(date));
-
+  // Metoda do anulowania rezerwacji
+  static Future<void> cancelReservation(
+      String parkingSpotId, String date, String token) async {
     final requestBody = {
       'parking_spot_id': parkingSpotId,
       'action': 'cancel',
-      'reservation_date': formattedDate,
+      'reservation_date': date,
       'reservation_start_time': "",
       'reservation_end_time': "",
     };
@@ -114,13 +140,7 @@ class ApiService {
     }
   }
 
-  static String formatTime(String time) {
-    if (time.contains(':') && time.split(':').length == 2) {
-      return '$time:00';
-    }
-    return time;
-  }
-
+  // Metoda do rezerwowania parkingu
   static Future<void> reserveParkingSpot({
     required String parkingSpotId,
     required String action,

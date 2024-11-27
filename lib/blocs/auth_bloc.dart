@@ -3,13 +3,13 @@ import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  AuthBloc() : super(AuthInitial()) {
+  AuthBloc() : super(const AuthInitial()) {
     on<LoggedIn>((event, emit) {
-      emit(Authenticated(event.token));
+      emit(Authenticated(event.token, event.userEmail));
     });
 
     on<LoggedOut>((event, emit) {
-      emit(Unauthenticated());
+      emit(const Unauthenticated());
     });
   }
 }

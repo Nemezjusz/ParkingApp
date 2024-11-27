@@ -5,42 +5,39 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/blocs/auth_state.dart';
+import 'package:smart_parking/models/reservation.dart';
 
 class ReservationItem extends StatelessWidget {
-  final String parkingSpotId;
-  final String spot;
-  final String status;
+  final Reservation reservation;
   final String date;
-  final Color color;
   final VoidCallback onReservationCancelled;
 
   const ReservationItem({
-    super.key,
-    required this.parkingSpotId,
-    required this.spot,
-    required this.status,
+    Key? key,
+    required this.reservation,
     required this.date,
-    required this.color,
     required this.onReservationCancelled,
-  });
+  }) : super(key: key);
 
-  void _cancelReservation(BuildContext context, String parkingSpotId,
-      String date, String spot) async {
+  void _cancelReservation(BuildContext context) async {
+    // Dodaj logowanie daty przed wysłaniem do API
+    print('Cancelling reservation with date: $date');
+
     // Pokaż potwierdzenie
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cancel Reservation?'),
         content: Text(
-            'Are you sure you want to cancel the reservation for spot $spot?'),
+            'Are you sure you want to cancel the reservation for spot ${reservation.prettyId}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Nie'),
+            child: const Text('No'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Tak'),
+            child: const Text('Yes'),
           ),
         ],
       ),
@@ -52,7 +49,7 @@ class ReservationItem extends StatelessWidget {
         final authState = context.read<AuthBloc>().state;
         if (authState is Authenticated) {
           await ApiService.cancelReservation(
-              parkingSpotId, date, authState.token);
+              reservation.parkingSpotId, date, authState.token!);
           LoadingDialog.hide(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -85,7 +82,7 @@ class ReservationItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     IconData statusIcon;
-    switch (status.toLowerCase()) {
+    switch (reservation.status.toLowerCase()) {
       case 'reserved':
         statusIcon = Icons.access_time;
         break;
@@ -100,6 +97,15 @@ class ReservationItem extends StatelessWidget {
         break;
     }
 
+    Color color = _getColorByStatus(reservation.status);
+
+    final authState = context.read<AuthBloc>().state;
+    final currentUserEmail = (authState is Authenticated) ? authState.userEmail : null;
+
+    // Determine if the reservation can be canceled: either reservedBy is null or matches currentUserEmail
+    bool canCancel = (reservation.reservedBy == null) ||
+        (currentUserEmail != null && reservation.reservedBy == currentUserEmail);
+
     return Card(
       color: color.withOpacity(0.9),
       shape: RoundedRectangleBorder(
@@ -110,24 +116,56 @@ class ReservationItem extends StatelessWidget {
       child: ListTile(
         leading: Icon(statusIcon, color: Colors.white, size: 30),
         title: Text(
-          'Spot: $spot',
+          'Spot: ${reservation.prettyId}',
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        subtitle: Text(
-          'Date: $date\nStatus: $status',
-          style: GoogleFonts.poppins(
-            color: Colors.white70,
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Date: $date',
+              style: GoogleFonts.poppins(
+                color: Colors.white70,
+              ),
+            ),
+            if (reservation.reservedBy != null)
+              Text(
+                'Reserved By: ${reservation.reservedBy}',
+                style: GoogleFonts.poppins(
+                  color: Colors.white70,
+                ),
+              ),
+            Text(
+              'Status: ${reservation.status}',
+              style: GoogleFonts.poppins(
+                color: Colors.white70,
+              ),
+            ),
+          ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.cancel, color: Colors.white, size: 30),
-          onPressed: () => _cancelReservation(
-              context, parkingSpotId, date, spot),
-        ),
+        trailing: canCancel
+            ? IconButton(
+                icon: const Icon(Icons.cancel, color: Colors.white, size: 30),
+                onPressed: () => _cancelReservation(context),
+              )
+            : null,
       ),
     );
+  }
+
+  Color _getColorByStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'reserved':
+        return Colors.yellow;
+      case 'occupied':
+        return Colors.red;
+      case 'confirmed':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 }

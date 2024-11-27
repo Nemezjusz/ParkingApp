@@ -8,6 +8,7 @@ import 'package:smart_parking/widgets/fields/input_widget.dart';
 import 'package:smart_parking/widgets/primary_button.dart';
 import 'package:smart_parking/screens/parking_map_screen.dart';
 import 'package:smart_parking/constants/constants.dart';
+import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +18,23 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  String? getUserEmailFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        return null;
+      }
+
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final Map<String, dynamic> payloadMap = json.decode(decoded);
+      return payloadMap['email'] as String?;
+    } catch (e) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -36,13 +54,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 final token = state.successResponse!;
 
-                // Przekazujemy token do AuthBloc
-                context.read<AuthBloc>().add(LoggedIn(token));
+                final userEmail = getUserEmailFromToken(token) ?? '';
+                context.read<AuthBloc>().add(LoggedIn(token, userEmail));
 
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ParkingMapScreen(),
+                    builder: (context) => const ParkingMapScreen(),
                   ),
                 );
               },

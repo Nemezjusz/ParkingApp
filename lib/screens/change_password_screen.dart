@@ -68,8 +68,7 @@ class ChangePasswordScreen extends StatelessWidget {
                               .headlineSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context)
-                                   .colorScheme.onSurface,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                         ),
                       ),

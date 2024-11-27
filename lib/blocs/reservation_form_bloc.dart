@@ -10,7 +10,7 @@ class ReservationFormBloc extends FormBloc<String, String> {
   // Fields
   final parkingSpotId = TextFieldBloc(); // Pole miejsca parkingowego
   final reservationDate = InputFieldBloc<DateTime, Object>(
-    initialValue: DateTime.now(), // Obecna data jako wartość początkowa
+    initialValue: DateTime.now(),
   );
 
   ReservationFormBloc({required this.token}) {
@@ -31,14 +31,14 @@ class ReservationFormBloc extends FormBloc<String, String> {
       // Walidacja wartości ParkingSpotId
       if (parkingSpotIdValue.isEmpty) {
         logger.w('Parking spot ID is empty. Aborting submission.');
-        emitFailure(failureResponse: "Wybierz miejsce parkingowe!");
+        emitFailure(failureResponse: "Parking spot ID is empty!");
         return;
       }
 
       // Sprawdź połączenie internetowe
       logger.i('Checking internet connection...');
       if (!await _hasInternetConnection()) {
-        emitFailure(failureResponse: "Brak połączenia z internetem!");
+        emitFailure(failureResponse: "No internet connection!");
         return;
       }
 
@@ -53,10 +53,10 @@ class ReservationFormBloc extends FormBloc<String, String> {
       logger.i('Reservation sent successfully.');
 
       emitSuccess(
-          successResponse: "Miejsce parkingowe zarezerwowane pomyślnie!");
+          successResponse: "Reservation successful!");
     } catch (error) {
       logger.e('Error occurred during reservation: $error');
-      emitFailure(failureResponse: "Wystąpił błąd: $error");
+      emitFailure(failureResponse: "Error occurred during reservation!");
     } finally {
       logger.i('--- ReservationFormBloc: onSubmitting ended ---');
     }
