@@ -279,37 +279,13 @@ async def reserve_parking_spot(
         raise HTTPException(status_code=404, detail="Parking spot not found")
 
     if reservation.action == "reserve":
-        if parking_spot["status"] != "free": # DOKONCZYC TUTAJ
-            raise HTTPException(status_code=400, detail="Parking spot is not free")
+        query = {"parking_spot_id": reservation.parking_spot_id}
+        spot_reservations = reservations_col.find(query)
 
-        # Parsuj czas
-        # try:
-        #     start_time = parse_time(reservation.start_time)
-        #     end_time = parse_time(reservation.end_time)
-        # except HTTPException as e:
-        #     raise e
+        async for spot_reservation in spot_reservations:
+            if spot_reservation["status"] == "reserved" and spot_reservation["reservation_date"] == datetime.combine(reservation.reservation_date, datetime.min.time()).isoformat():
+                raise HTTPException(status_code=400, detail="Parking spot is not free")
 
-        # Sprawdzenie poprawności czasów
-        # if start_time >= end_time:
-        #     raise HTTPException(status_code=400, detail="Start time must be before end time")
-
-        # Sprawdzenie konfliktu rezerwacji
-        # existing_reservation = await reservations_col.find_one({
-        #     "parking_spot_id": reservation.parking_spot_id,
-        #     "reservation_date": datetime.combine(reservation.reservation_date, datetime.min.time()).isoformat(),
-        #     "active": True,
-        #     "$or": [
-        #         {
-        #             "start_time": {"$lt": reservation.end_time.isoformat()},
-        #             "end_time": {"$gt": reservation.start_time.isoformat()}
-        #         }
-        #     ]
-        # })
-        # print("Checking reservation conflict for:", existing_reservation)
-        
-        # if existing_reservation:
-        #     raise HTTPException(status_code=400, detail="Parking spot is already reserved for the selected time")
-        
         # Tworzenie dokumentu rezerwacji
         reservation_doc = {
             "user_id": str(current_user["_id"]),
@@ -318,8 +294,6 @@ async def reserve_parking_spot(
             "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "reserved",
             "reservation_date": datetime.combine(reservation.reservation_date, datetime.min.time()).isoformat(),  # Konwersja
-            # "start_time": reservation.start_time.isoformat(),  # Konwersja
-            # "end_time": reservation.end_time.isoformat()  # Konwersja
             "reserved_by": str(current_user["full_name"])
         }
         # Serializacja dat i czasów
@@ -334,9 +308,6 @@ async def reserve_parking_spot(
                     "color": "YELLOW",
                     "reserved_user_id": str(current_user["_id"]),
                     "reservation_date": datetime.combine(reservation.reservation_date, datetime.min.time()).isoformat(),  # Konwersja
-                    # "start_time": reservation.start_time.isoformat(),
-                    # "end_time": reservation.end_time.isoformat(),
-                    
                 }}
             )
             return {"message": "Parking spot reserved", "color": "YELLOW"}
@@ -366,7 +337,6 @@ async def reserve_parking_spot(
                 "reservation_date": None,
                 "start_time": None,
                 "end_time": None,
-                # "reserved_by": None
             }}
         )
         return {"message": "Reservation cancelled", "color": "GREEN"}
@@ -427,8 +397,6 @@ async def get_user_reservations(current_user: dict = Depends(get_current_user)):
             "parking_spot_id": reservation["parking_spot_id"],
             "pretty_id": pretty_id,
             "reservation_date": reservation["reservation_date"],
-            # "start_time": reservation["start_time"],
-            # "end_time": reservation["end_time"],
             "status": reservation["status"],
         }
         reservations.append(reservation_data)
