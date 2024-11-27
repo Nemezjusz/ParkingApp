@@ -11,24 +11,43 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_parking/services/push_notification_service.dart';
 import 'package:smart_parking/screens/change_password_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final authState = context.watch<AuthBloc>().state;
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
 
-    String username = 'Guest';
-    String email = 'Not available';
+class _ProfileScreenState extends State<ProfileScreen> {
+  String fullName = 'Guest';
+  String email = 'Not available';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    final authState = context.read<AuthBloc>().state;
 
     if (authState.isAuthenticated && authState.token != null) {
       Map<String, dynamic> decodedToken = JwtDecoder.decode(authState.token!);
-      username = decodedToken['sub'];
-      email = decodedToken['email'] ?? 'Not available';
+      setState(() {
+        fullName = decodedToken['full_name'] ?? 'Guest';
+        email = decodedToken['email'] ?? 'Not available';
+      });
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Pobranie aktualnego motywu
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -40,28 +59,30 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundColor: Theme.of(context).primaryColor,
+                      backgroundColor: theme.primaryColor,
                       child: Icon(
                         Icons.person,
                         size: 50,
-                        color: Colors.white,
+                        color: theme.colorScheme.onPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
+                    // Wyświetlenie imienia i nazwiska
                     Text(
-                      username,
-                      style:
-                          Theme.of(context).textTheme.headlineLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                      fullName,
+                      style: textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 4),
+                    // Wyświetlenie adresu e-mail
                     Text(
                       email,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[400],
-                          ),
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -70,8 +91,7 @@ class ProfileScreen extends StatelessWidget {
 
               // Sekcja ustawień
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: kDefaultPadding),
+                padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -171,6 +191,7 @@ class _NotificationsSwitchState extends State<NotificationsSwitch> {
 
   @override
   Widget build(BuildContext context) {
+
     return SettingsTile.switchTileWidget(
       context: context,
       icon: Icons.notifications,

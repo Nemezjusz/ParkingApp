@@ -47,7 +47,15 @@ class LoginScreen extends StatelessWidget {
               onFailure: (context, state) {
                 LoadingDialog.hide(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.failureResponse!)),
+                  SnackBar(
+                    content: Text(
+                      state.failureResponse!,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onError,
+                          ),
+                    ),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
                 );
               },
               child: SafeArea(
@@ -69,15 +77,8 @@ class LoginScreen extends StatelessWidget {
                         Text(
                           "Sign in to your account",
                           textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineLarge
-                              ?.copyWith(
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.color,
                               ),
                         ),
                         const SizedBox(height: kDefaultPadding),
