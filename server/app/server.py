@@ -275,7 +275,7 @@ async def reserve_parking_spot(
         raise HTTPException(status_code=404, detail="Parking spot not found")
 
     if reservation.action == "reserve":
-        if parking_spot["status"] != "free":
+        if parking_spot["status"] != "free": # DOKONCZYC TUTAJ
             raise HTTPException(status_code=400, detail="Parking spot is not free")
 
         # Parsuj czas
@@ -439,23 +439,27 @@ async def get_reservations():
     Dodaje pole `pretty_id` z kolekcji parking_spots.
     """
     reservations = []
-    async for reservation in reservations_col:
-        # Pobranie dokumentu parking_spot na podstawie parking_spot_id
-        parking_spot = await parking_spots_col.find_one({"_id": ObjectId(reservation["parking_spot_id"])})
-        pretty_id = parking_spot.get("pretty_id", "N/A") if parking_spot else "N/A"
+    cursor = reservations_col.find({})
 
-        reservation_data = {
-            "id": str(reservation["_id"]),
-            "parking_spot_id": reservation["parking_spot_id"],
-            "pretty_id": pretty_id,
-            "reservation_date": reservation["reservation_date"],
-            # "start_time": reservation["start_time"],
-            # "end_time": reservation["end_time"],
-            "status": reservation["status"],
-            "reserved_by": reservation["reserved_by"]
-        }
-        reservations.append(reservation_data)
-        print("reservation_data: ", reservation_data)
+    async for reservation in cursor:
+        try:
+            parking_spot = await parking_spots_col.find_one({"_id": ObjectId(reservation["parking_spot_id"])})
+            pretty_id = parking_spot.get("pretty_id", "N/A") if parking_spot else "N/A"
+
+            reservation_data = {
+                "id": str(reservation.get("_id", "")),
+                "parking_spot_id": reservation.get("parking_spot_id", ""),
+                "pretty_id": pretty_id,
+                "reservation_date": reservation.get("reservation_date", "N/A"),
+                "status": reservation.get("status", "unknown"),
+                "reserved_by": reservation.get("reserved_by", "N/A")
+            }
+            reservations.append(reservation_data)
+            print("reservation_data: ", reservation_data)
+        except Exception as e:
+            print(f"Error processing reservation: {e}")
+            continue
+            
     return reservations
 
 if __name__ == "__main__":
