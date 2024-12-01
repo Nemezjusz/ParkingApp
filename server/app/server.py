@@ -7,6 +7,7 @@ from bson import ObjectId  # type: ignore
 from passlib.context import CryptContext  # type: ignore
 from datetime import datetime, timedelta, timezone, date, time
 import jwt  # type: ignore
+import asyncio
 
 app = FastAPI()
 
@@ -157,10 +158,16 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
     })
 
     if spot_status.status == "occupied":
-        # sprawdza czy jest rezerwacja
-        if reservation:
+        # sprawdza czy jest rezerwacja datetime.combine(reservation.reservation_date, datetime.min.time()).isoformat()
+        if reservation and reservation["reservation_date"]==datetime.combine(datetime.now(timezone.utc).date() ,datetime.min.time()).isoformat():
             current_time = datetime.now(timezone.utc)
-            if "confirmation_deadline" in reservation and current_time > reservation["confirmation_deadline"]:
+        if "confirmation_deadline" in reservation:
+            # Convert confirmation_deadline to UTC aware datetime
+            deadline = reservation["confirmation_deadline"]
+            # MongoDB stores datetime in UTC, but we need to explicitly add timezone info
+            deadline = deadline.replace(tzinfo=timezone.utc)
+            
+            if current_time > deadline:
                 update_data["color"] = "RED_BLINK"
                 update_data["waiting_confirmation"] = False
             else:
@@ -189,7 +196,6 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
         update_data["waiting_confirmation"] = False
         update_data["color"] = "GREEN"
         
-
     await parking_spots_col.update_one(
         {"_id": ObjectId(spot_status.parking_spot_id)},
         {"$set": update_data}
@@ -344,27 +350,6 @@ async def reserve_parking_spot(
 @app.get("/parking_status")
 async def get_parking_status():
 
-    today = datetime.now(timezone.utc).date()
-    today_start = datetime.combine(today, datetime.min.time())
-    
-    # Find all active reservations for today
-    today_reservations = await reservations_col.find({
-        "active": True,
-        "reservation_date": today_start.isoformat()
-    }).to_list(None)
-    
-    # Update parking spots for today's reservations
-    for reservation in today_reservations:
-        await parking_spots_col.update_one(
-            {"_id": ObjectId(reservation["parking_spot_id"])},
-            {"$set": {
-                "status": "reserved",
-                "color": "YELLOW",
-                "reserved_user_id": reservation["user_id"],
-                "reservation_date": today_start.isoformat()
-            }}
-        )
-
     spots = []
     async for spot in parking_spots_col.find():
         spot_data = {
@@ -433,6 +418,52 @@ async def get_reservations():
             continue
             
     return reservations
+
+
+async def update_reservations_today():
+    today = datetime.now(timezone.utc).date()
+    today_start = datetime.combine(today, datetime.min.time())
+    
+    # Find all active reservations for today
+    today_reservations = await reservations_col.find({
+        "active": True,
+        "reservation_date": today_start.isoformat()
+    }).to_list(None)
+    
+    # Update parking spots for today's reservations
+    for reservation in today_reservations:
+        await parking_spots_col.update_one(
+            {"_id": ObjectId(reservation["parking_spot_id"])},
+            {"$set": {
+                "status": "reserved",
+                "color": "YELLOW",
+                "reserved_user_id": reservation["user_id"],
+                "reservation_date": today_start.isoformat()
+            }}
+        )
+
+async def schedule_daily_update():
+    while True:
+        # Calculate time until next midnight
+        now = datetime.now(timezone.utc)
+        tomorrow = now + timedelta(days=1)
+        midnight = datetime.combine(tomorrow, datetime.min.time())
+        seconds_until_midnight = (midnight - now).total_seconds()
+
+        # Wait until midnight
+        await asyncio.sleep(seconds_until_midnight)
+        
+        # Run the update
+        try:
+            await update_reservations_today()
+            print(f"Daily reservation update completed at {datetime.now(timezone.utc)}")
+        except Exception as e:
+            print(f"Error in daily reservation update: {e}")
+
+# Add to FastAPI startup event
+@app.on_event("startup")
+async def start_scheduler():
+    asyncio.create_task(schedule_daily_update())
 
 if __name__ == "__main__":
     import uvicorn  # type: ignore
