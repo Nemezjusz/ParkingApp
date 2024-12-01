@@ -1,8 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_parking/models/parking_spot.dart';
-import 'package:smart_parking/services/api_service.dart';
+import '../models/parking_spot.dart';
+import '../services/api_service.dart';
 import 'package:equatable/equatable.dart';
 import 'package:logger/logger.dart';
+
+// Events
+abstract class ParkingSpotEvent extends Equatable {
+  const ParkingSpotEvent();
+
+  @override
+  List<Object> get props => [];
+}
+
+class FetchParkingSpots extends ParkingSpotEvent {}
 
 // States
 abstract class ParkingSpotState extends Equatable {
@@ -33,16 +43,6 @@ class ParkingSpotError extends ParkingSpotState {
   @override
   List<Object> get props => [message];
 }
-
-// Events
-abstract class ParkingSpotEvent extends Equatable {
-  const ParkingSpotEvent();
-
-  @override
-  List<Object> get props => [];
-}
-
-class FetchParkingSpots extends ParkingSpotEvent {}
 
 // Bloc
 class ParkingSpotBloc extends Bloc<ParkingSpotEvent, ParkingSpotState> {

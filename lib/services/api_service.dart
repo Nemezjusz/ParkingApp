@@ -7,7 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:smart_parking/models/reservation.dart';
 
 class ApiService {
-   static final String _baseUrl =
+  static final String _baseUrl =
       dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8000';
   static final String _loginEndpoint = dotenv.env['LOGIN_ENDPOINT'] ?? '/login';
   static final String _reservationsEndpoint =
@@ -48,48 +48,48 @@ class ApiService {
   }
 
   static Future<List<Reservation>> fetchUserReservations(String token) async {
-  final response = await http.get(
-    Uri.parse('$_baseUrl$_reservationsEndpoint'),
-    headers: {
-      'Authorization': 'Bearer $token',
-    },
-  );
+    final response = await http.get(
+      Uri.parse('$_baseUrl$_reservationsEndpoint'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
 
-  logger.d('Fetching user reservations with token: $token');
-  logger.d('API Response Status: ${response.statusCode}');
-  logger.d('API Response Body: ${response.body}');
+    logger.d('Fetching user reservations with token: $token');
+    logger.d('API Response Status: ${response.statusCode}');
+    logger.d('API Response Body: ${response.body}');
 
-  if (response.statusCode == 200) {
-    final List<dynamic> reservations = json.decode(response.body);
-    return reservations
-        .map((r) => Reservation.fromJson(r as Map<String, dynamic>))
-        .toList();
-  } else {
-    throw Exception('Failed to fetch user reservations: ${response.body}');
+    if (response.statusCode == 200) {
+      final List<dynamic> reservations = json.decode(response.body);
+      return reservations
+          .map((r) => Reservation.fromJson(r as Map<String, dynamic>))
+          .toList();
+    } else {
+      throw Exception('Failed to fetch user reservations: ${response.body}');
+    }
   }
-}
 
-static Future<List<Reservation>> fetchAllReservations(String token) async {
-  final response = await http.get(
-    Uri.parse('$_baseUrl$_reservationsAllEndpoint'),
-    headers: {
-      'Authorization': 'Bearer $token',
-    },
-  );
+  static Future<List<Reservation>> fetchAllReservations(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl$_reservationsAllEndpoint'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
 
-  logger.d('Fetching all reservations with token: $token');
-  logger.d('API Response Status: ${response.statusCode}');
-  logger.d('API Response Body: ${response.body}');
+    logger.d('Fetching all reservations with token: $token');
+    logger.d('API Response Status: ${response.statusCode}');
+    logger.d('API Response Body: ${response.body}');
 
-  if (response.statusCode == 200) {
-    final List<dynamic> reservations = json.decode(response.body);
-    return reservations
-        .map((r) => Reservation.fromJson(r as Map<String, dynamic>))
-        .toList();
-  } else {
-    throw Exception('Failed to fetch all reservations: ${response.body}');
+    if (response.statusCode == 200) {
+      final List<dynamic> reservations = json.decode(response.body);
+      return reservations
+          .map((r) => Reservation.fromJson(r as Map<String, dynamic>))
+          .toList();
+    } else {
+      throw Exception('Failed to fetch all reservations: ${response.body}');
+    }
   }
-}
 
   static Future<List<ParkingSpot>> getParkingStatus(String token) async {
     final response = await http.get(
@@ -176,26 +176,27 @@ static Future<List<Reservation>> fetchAllReservations(String token) async {
       throw Exception('Failed to reserve parking spot: ${response.body}');
     }
   }
+
   static Future<void> confirmParkingSpot({
-  required String parkingSpotId,
-  required String token,
-}) async {
-  final url = '$_baseUrl/confirm_parking';
-  final body = {
-    'parking_spot_id': parkingSpotId,
-  };
+    required String parkingSpotId,
+    required String token,
+  }) async {
+    final url = '$_baseUrl/confirm_parking';
+    final body = {
+      'parking_spot_id': parkingSpotId,
+    };
 
-  final response = await http.post(
-    Uri.parse(url),
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    },
-    body: jsonEncode(body),
-  );
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
 
-  if (response.statusCode != 200) {
-    throw Exception('Failed to confirm parking spot: ${response.body}');
+    if (response.statusCode != 200) {
+      throw Exception('Failed to confirm parking spot: ${response.body}');
+    }
   }
-}
 }

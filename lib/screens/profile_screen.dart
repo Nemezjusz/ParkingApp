@@ -141,6 +141,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                 ),
               ),
+              const SizedBox(height: 100),
+              Text(
+                '© 2024',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
