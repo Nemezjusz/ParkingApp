@@ -329,10 +329,7 @@ async def reserve_parking_spot(
         if not active_reservation:
             raise HTTPException(status_code=400, detail="No active reservation found")
         
-        await reservations_col.update_one(
-            {"_id": active_reservation["_id"]},
-            {"$set": {"active": False, "status": "cancelled"}}
-        )
+        await reservations_col.delete_one({"_id": active_reservation["_id"]})
         
         await parking_spots_col.update_one(
             {"_id": ObjectId(reservation.parking_spot_id)},
@@ -349,7 +346,6 @@ async def reserve_parking_spot(
 
 @app.get("/parking_status")
 async def get_parking_status():
-
     spots = []
     async for spot in parking_spots_col.find():
         spot_data = {
