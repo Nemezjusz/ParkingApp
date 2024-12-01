@@ -7,7 +7,7 @@ from prettytable import PrettyTable  # type: ignore
 from bson import ObjectId  # type: ignore
 
 
-MONGO_URL = "mongodb://localhost:27017"
+MONGO_URL = "mongodb://mongodb:27017"
 client = AsyncIOMotorClient(MONGO_URL)
 db = client.parking_system
 users_col = db.users
