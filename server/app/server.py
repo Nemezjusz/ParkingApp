@@ -196,13 +196,10 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
         update_data["waiting_confirmation"] = False
         update_data["color"] = "GREEN"
         
-    print("update_data: ", update_data)
     await parking_spots_col.update_one(
         {"_id": ObjectId(spot_status.parking_spot_id)},
         {"$set": update_data}
     )
-    updated_spot = await parking_spots_col.find_one({"_id": ObjectId(spot_status.parking_spot_id)})
-    print("After update - spot data:", updated_spot)
     
     return {"color": update_data["color"]}
 
