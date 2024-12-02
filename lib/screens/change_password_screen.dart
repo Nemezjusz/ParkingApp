@@ -37,6 +37,17 @@ class ChangePasswordScreen extends StatelessWidget {
                   SnackBar(content: Text(state.failureResponse ?? 'Error')),
                 );
               },
+              onLoading: (context, state) {
+                LoadingDialog.show(context);
+              },
+              onSubmissionFailed: (context, state) {
+                LoadingDialog.hide(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Check your credentials and try again!"),
+                  ),
+                );
+              },
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
