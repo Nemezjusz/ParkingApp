@@ -161,15 +161,16 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
         # sprawdza czy jest rezerwacja datetime.combine(reservation.reservation_date, datetime.min.time()).isoformat()
         if reservation and reservation["reservation_date"]==datetime.combine(datetime.now(timezone.utc).date() ,datetime.min.time()).isoformat():
             current_time = datetime.now(timezone.utc)
-        if reservation and "confirmation_deadline" in reservation:
-            # Convert confirmation_deadline to UTC aware datetime
-            deadline = reservation["confirmation_deadline"]
-            # MongoDB stores datetime in UTC, but we need to explicitly add timezone info
-            deadline = deadline.replace(tzinfo=timezone.utc)
             
-            if current_time > deadline:
-                update_data["color"] = "RED_BLINK"
-                update_data["waiting_confirmation"] = False
+            if "confirmation_deadline" in reservation:
+                # Convert confirmation_deadline to UTC aware datetime
+                deadline = reservation["confirmation_deadline"]
+                # MongoDB stores datetime in UTC, but we need to explicitly add timezone info
+                deadline = deadline.replace(tzinfo=timezone.utc)
+                
+                if current_time > deadline:
+                    update_data["color"] = "RED_BLINK"
+                    update_data["waiting_confirmation"] = False
             else:
                 update_data["waiting_confirmation"] = True
                 update_data["color"] = "BLUE"
