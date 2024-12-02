@@ -161,7 +161,7 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
         # sprawdza czy jest rezerwacja datetime.combine(reservation.reservation_date, datetime.min.time()).isoformat()
         if reservation and reservation["reservation_date"]==datetime.combine(datetime.now(timezone.utc).date() ,datetime.min.time()).isoformat():
             current_time = datetime.now(timezone.utc)
-        if "confirmation_deadline" in reservation:
+        if reservation and "confirmation_deadline" in reservation:
             # Convert confirmation_deadline to UTC aware datetime
             deadline = reservation["confirmation_deadline"]
             # MongoDB stores datetime in UTC, but we need to explicitly add timezone info
