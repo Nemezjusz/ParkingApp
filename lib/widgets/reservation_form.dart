@@ -8,7 +8,9 @@ import 'package:smart_parking/widgets/fields/input_widget.dart';
 import 'package:intl/intl.dart';
 
 class ReservationForm extends StatelessWidget {
-  const ReservationForm({super.key});
+  final VoidCallback? onReservationAdded;
+
+  const ReservationForm({super.key, this.onReservationAdded});
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +32,13 @@ class ReservationForm extends StatelessWidget {
           SnackBar(content: Text(state.successResponse!)),
         );
 
-        // Refresh available parking spots
+        // Odświeżanie miejsc parkingowych
         await reservationFormBloc.refreshAvailableSpots();
+
+        // Wywołanie callbacku, jeśli istnieje
+        if (onReservationAdded != null) {
+          onReservationAdded!();
+        }
       },
       onFailure: (context, state) {
         Navigator.of(context).pop(); // Close the dialog
@@ -77,6 +84,7 @@ class ReservationForm extends StatelessWidget {
             PrimaryButton(
               text: "Confirm",
               press: reservationFormBloc.submit,
+              textColor: Theme.of(context).textTheme.bodyLarge!.color ?? Colors.black,
             ),
           ],
         ),
@@ -84,4 +92,5 @@ class ReservationForm extends StatelessWidget {
     );
   }
 }
+
 

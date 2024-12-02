@@ -13,7 +13,7 @@ class ParkingGrid extends StatefulWidget {
     Key? key,
     required this.parkingSpots,
     this.currentFloor = 'A', // Domyślne piętro
-    this.availableFloors = const ['A', 'B', 'C'], // Domyślne piętra
+    this.availableFloors = const ['A', 'B'], // Domyślne piętra
     this.onFloorChanged, // Funkcja może być opcjonalna
   }) : super(key: key);
 
@@ -71,11 +71,10 @@ class _ParkingGridState extends State<ParkingGrid> {
             ParkingSpotTile(
               id: leftSpot.prettyId ?? 'Spot ${i + 1}',
               status: leftSpot.status,
-              color: _getSpotColor(leftSpot.status),
               onTap: () {
-                if (leftSpot.status.toLowerCase() != 'reserved') {
-                  _showReservationDialog(context, leftSpot.prettyId ?? '');
-                }
+                // if (leftSpot.status.toLowerCase() != 'reserved') {
+                //   _showReservationDialog(context, leftSpot.prettyId ?? '');
+                // }
               },
             ),
             // Droga centralna z kreskami
@@ -91,11 +90,10 @@ class _ParkingGridState extends State<ParkingGrid> {
                 ? ParkingSpotTile(
                     id: rightSpot.prettyId ?? 'Spot ${i + 2}',
                     status: rightSpot.status,
-                    color: _getSpotColor(rightSpot.status),
                     onTap: () {
-                      if (rightSpot.status.toLowerCase() != 'reserved') {
-                        _showReservationDialog(context, rightSpot.prettyId ?? '');
-                      }
+                      // if (rightSpot.status.toLowerCase() != 'reserved') {
+                      //   _showReservationDialog(context, rightSpot.prettyId ?? '');
+                      // }
                     },
                   )
                 : SizedBox(width: roadWidth), // Puste miejsce dla wyrównania
@@ -217,16 +215,18 @@ class _ParkingGridState extends State<ParkingGrid> {
   }
 
   // Funkcja koloru miejsca parkingowego
-  MaterialColor _getSpotColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'free':
-        return Colors.green;
-      case 'reserved':
-        return Colors.yellow;
-      default:
-        return Colors.red;
-    }
+MaterialColor _getSpotColor(String status) {
+  switch (status.toLowerCase()) {
+    case 'free':
+      return Colors.green;
+    case 'reserved':
+      return Colors.yellow;
+    case 'occupied':
+      return Colors.red;
+    default:
+      return Colors.grey;
   }
+}
 
   // Funkcja dialogu rezerwacji
   void _showReservationDialog(BuildContext context, String spotId) {

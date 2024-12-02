@@ -94,9 +94,7 @@ class _InputWidgetState<T> extends State<InputWidget<T>> {
       filled: true,
       fillColor:
           theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceVariant,
-      hintStyle: theme.textTheme.bodyMedium?.copyWith(
-        color: theme.colorScheme.onSurface.withOpacity(0.6),
-      ),
+      hintStyle: theme.textTheme.bodyMedium!.copyWith(color: theme.textTheme.bodyMedium!.color!.withOpacity(0.6))
     );
 
     switch (widget.fieldType) {
@@ -123,6 +121,7 @@ class _InputWidgetState<T> extends State<InputWidget<T>> {
           lastDate: widget.lastDate!,
           initialDate: widget.firstDate!,
           decoration: decoration,
+          textColor: MaterialStateProperty.all(theme.textTheme.bodyMedium!.color),
         );
       case FieldType.text:
       default:
@@ -134,10 +133,6 @@ class _InputWidgetState<T> extends State<InputWidget<T>> {
           keyboardType: widget.textInputType,
           obscureText: _obscureText,
           decoration: decoration,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface,
-            fontSize: 16,
-          ),
           cursorColor: theme.colorScheme.primary,
         );
     }

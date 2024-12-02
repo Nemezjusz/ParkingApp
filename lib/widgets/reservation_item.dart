@@ -7,12 +7,14 @@ import 'package:smart_parking/services/api_service.dart';
 
 class ReservationItem extends StatelessWidget {
   final Reservation reservation;
-  final VoidCallback? onReservationUpdated; // Callback dla odświeżenia
+  final bool canCancelHere;
+  final VoidCallback onActionCompleted;
 
   const ReservationItem({
     Key? key,
     required this.reservation,
-    this.onReservationUpdated,
+    required this.canCancelHere,
+    required this.onActionCompleted,
   }) : super(key: key);
 
   Future<void> _cancelReservation(BuildContext context) async {
@@ -48,11 +50,6 @@ class ReservationItem extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Reservation canceled successfully.')),
         );
-
-        // Wywołanie callbacku po udanej operacji
-        if (onReservationUpdated != null) {
-          onReservationUpdated!();
-        }
       } catch (e) {
         LoadingDialog.hide(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -60,11 +57,11 @@ class ReservationItem extends StatelessWidget {
         );
       }
     }
+    onActionCompleted();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Ignoruj rezerwacje o statusie "cancelled"
     if (reservation.status.toLowerCase() == 'cancelled') {
       return const SizedBox.shrink();
     }
@@ -73,7 +70,6 @@ class ReservationItem extends StatelessWidget {
       DateTime.parse(reservation.reservationDate),
     );
 
-    // Ustal ikonę na podstawie statusu
     IconData statusIcon;
     switch (reservation.status.toLowerCase()) {
       case 'reserved':
@@ -90,9 +86,7 @@ class ReservationItem extends StatelessWidget {
         break;
     }
 
-    // Ustal kolor na podstawie statusu
     Color color = _getColorByStatus(reservation.status);
-
     return Card(
       color: color.withOpacity(0.9),
       shape: RoundedRectangleBorder(
@@ -101,11 +95,11 @@ class ReservationItem extends StatelessWidget {
       elevation: 6,
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: ListTile(
-        leading: Icon(statusIcon, color: Colors.white, size: 30),
+        leading: Icon(statusIcon, color: Theme.of(context).textTheme.bodyMedium?.color, size: 30),
         title: Text(
           'Spot: ${reservation.prettyId}',
           style: GoogleFonts.poppins(
-            color: Colors.white,
+            color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -115,33 +109,34 @@ class ReservationItem extends StatelessWidget {
             Text(
               'Date: $formattedDate',
               style: GoogleFonts.poppins(
-                color: Colors.white70,
+              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white70,
               ),
             ),
             if (reservation.reservedBy != null)
               Text(
-                'Reserved By: ${reservation.reservedBy}',
-                style: GoogleFonts.poppins(
-                  color: Colors.white70,
-                ),
+              'Reserved By: ${reservation.reservedBy?.replaceAll('BÅaÅ¼ej', 'Błażej')}',
+              style: GoogleFonts.poppins(
+                color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white70,
+              ),
               ),
             Text(
               'Status: ${reservation.status}',
               style: GoogleFonts.poppins(
-                color: Colors.white70,
+              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white70,
               ),
             ),
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.cancel, color: Colors.white, size: 30),
+        trailing: canCancelHere
+            ? IconButton(
+          icon: Icon(Icons.cancel, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white70, size: 30),
           onPressed: () => _cancelReservation(context),
-        ),
+              )
+            : null,
       ),
     );
   }
 
-  // Funkcja do określania koloru na podstawie statusu
   Color _getColorByStatus(String status) {
     switch (status.toLowerCase()) {
       case 'reserved':
@@ -155,4 +150,3 @@ class ReservationItem extends StatelessWidget {
     }
   }
 }
-

@@ -40,4 +40,9 @@ class ParkingSpot {
       'waiting_confirmation': waitingConfirmation,
     };
   }
+   @override
+  String toString() {
+    return 'ParkingSpot(id: $id, prettyId: $prettyId, status: $status, color: $color, floor: $floor, spotNumber: $spotNumber, waitingConfirmation: $waitingConfirmation)';
+  }
+
 }

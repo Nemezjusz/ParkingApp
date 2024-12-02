@@ -10,55 +10,56 @@ class ParkingSpotTile extends StatelessWidget {
     required this.id,
     required this.status,
     required this.onTap,
-    required MaterialColor color,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Określenie koloru na podstawie statusu
+    // Determine border color based on the status
     Color borderColor;
+    Widget? icon;
 
     switch (status.toLowerCase()) {
       case 'free':
         borderColor = Colors.green;
         break;
       case 'reserved':
-        borderColor = Colors.grey;
+        borderColor = Colors.yellow.shade700;
         break;
       case 'occupied':
         borderColor = Colors.red;
+        icon = Image.asset(
+          'assets/images/car.png', // Path to the car image
+          height: 40,
+          fit: BoxFit.contain,
+        );
         break;
       default:
         borderColor = Colors.grey;
     }
 
     return GestureDetector(
-      onTap: status.toLowerCase() == 'reserved' ? null : onTap, // Wyłączone tap dla zarezerwowanych
+      onTap: status.toLowerCase() == 'occupied' ? null : onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6.0),
-        padding: const EdgeInsets.all(20.0),
-        width: 150, // Zmniejszona szerokość
+        padding: const EdgeInsets.all(16.0),
+        width: 140,
+        height:96,
         decoration: BoxDecoration(
+          color: borderColor.withOpacity(0.1),
           border: Border.all(color: borderColor, width: 2),
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (/*status.toLowerCase()*/ 'occupied' == 'occupied')
-              Image.asset(
-                height: 50,
-                'assets/images/car.png', // Ścieżka do obrazka
-                fit: BoxFit.contain,
-              ),
+            if (icon != null) icon,
             Text(
               id,
               style: TextStyle(
-          color: borderColor,
-          fontWeight: FontWeight.bold,
+                color: borderColor,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            
           ],
         ),
       ),

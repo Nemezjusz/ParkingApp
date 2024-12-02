@@ -9,11 +9,15 @@ import 'package:smart_parking/services/api_service.dart';
 class ReservationsSection extends StatefulWidget {
   final List<Reservation> reservations;
   final bool forAll;
+  final bool canCancelHere;
+  final VoidCallback onReservationChanged;
 
   const ReservationsSection({
     Key? key,
     required this.reservations,
     required this.forAll,
+    required this.canCancelHere,
+    required this.onReservationChanged,
   }) : super(key: key);
 
   @override
@@ -23,11 +27,40 @@ class ReservationsSection extends StatefulWidget {
 class ReservationsSectionState extends State<ReservationsSection> {
   DateTime? _selectedDate;
   List<Reservation> reservations = [];
+  bool _isRetrying = false;
 
   @override
   void initState() {
     super.initState();
     reservations = widget.reservations;
+    if (reservations.isEmpty) {
+      _retryFetchingReservations();
+    }
+  }
+
+  Future<void> _retryFetchingReservations() async {
+    if (_isRetrying) return;
+
+    setState(() {
+      _isRetrying = true;
+    });
+
+    try {
+      final fetchedReservations = await ApiService.fetchAllReservations();
+      final activeReservations = fetchedReservations
+          .where((r) => r.status.toLowerCase() != 'cancelled')
+          .toList();
+
+      setState(() {
+        reservations = activeReservations;
+      });
+    } catch (e) {
+      print('Error retrying reservations: $e');
+    } finally {
+      setState(() {
+        _isRetrying = false;
+      });
+    }
   }
 
   List<Reservation> _filterReservations() {
@@ -65,73 +98,59 @@ class ReservationsSectionState extends State<ReservationsSection> {
     }
   }
 
-  Future<void> _refreshReservations() async {
-    try {
-      final newReservations = widget.forAll
-          ? await ApiService.fetchAllReservations()
-          : await ApiService.fetchUserReservations();
-      setState(() {
-        reservations = newReservations;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to refresh reservations: $e')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final filteredReservations = _filterReservations();
 
-    return Flexible(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SectionHeader(
-            icon: Icons.list,
-            title: widget.forAll ? 'All Reservations' : 'My Reservations',
-            trailing: widget.forAll
-                ? IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: _pickDate,
-                    tooltip: 'Select Date',
-                  )
-                : null,
-          ),
-          if (_selectedDate != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Selected Date: ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          icon: Icons.list,
+          title: widget.forAll ? 'All Reservations' : 'My Reservations',
+          trailing: widget.forAll
+              ? IconButton(
+                  icon: const Icon(Icons.calendar_today),
+                  onPressed: _pickDate,
+                  tooltip: 'Select Date',
+                )
+              : null,
+        ),
+        if (_selectedDate != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'Selected Date: ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          const SizedBox(height: 10),
-          filteredReservations.isEmpty
-              ? Center(
-                  child: Text(
-                    'No reservations available.',
-                    style: GoogleFonts.poppins(color: Colors.grey),
-                  ),
-                )
-              : Expanded(
-                  child: ListView.builder(
-                    itemCount: filteredReservations.length,
-                    itemBuilder: (context, index) {
-                      final reservation = filteredReservations[index];
-                      return ReservationItem(
-                        reservation: reservation,
-                        onReservationUpdated: _refreshReservations, // Callback
-                      );
-                    },
-                  ),
-                ),
-        ],
-      ),
+          ),
+        const SizedBox(height: 10),
+        _isRetrying
+            ? const Center(child: CircularProgressIndicator())
+            : Expanded(
+                child: filteredReservations.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No reservations available.',
+                          style: GoogleFonts.poppins(color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: filteredReservations.length,
+                        itemBuilder: (context, index) {
+                          final reservation = filteredReservations[index];
+                          return ReservationItem(
+                            reservation: reservation,
+                            canCancelHere: widget.canCancelHere,
+                            onActionCompleted: widget.onReservationChanged,
+                          );
+                        },
+                      ),
+              ),
+      ],
     );
   }
 }

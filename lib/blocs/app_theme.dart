@@ -5,7 +5,7 @@ class AppTheme {
   static final ThemeData lightTheme = ThemeData.light().copyWith(
     brightness: Brightness.light,
     primaryColor: const Color(0xFFc6ad8f), // #c6ad8f
-    scaffoldBackgroundColor: const Color(0xFFfef3e9), // #fef3e9
+    scaffoldBackgroundColor: const Color(0xFFEDE2D1), // #fef3e9
     appBarTheme: const AppBarTheme(
       backgroundColor: Color(0xFFc6ad8f),
       iconTheme: IconThemeData(color: Colors.white),

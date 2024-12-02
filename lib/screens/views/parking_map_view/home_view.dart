@@ -1,17 +1,75 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:smart_parking/models/parking_spot.dart';
+import 'package:smart_parking/models/reservation.dart';
 import 'package:smart_parking/screens/views/parking_map_view/parking_grid.dart';
 import 'package:smart_parking/services/api_service.dart';
 import 'package:smart_parking/services/secure_storage_service.dart';
 import 'package:smart_parking/screens/views/universal/reservations_section.dart';
-import 'package:smart_parking/screens/views/universal/section_header.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
 
-  /// Pobiera token i dane o miejscach parkingowych
-  Future<Map<String, dynamic>> _loadData() async {
+  @override
+  _HomeViewState createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  late Timer _timer;
+  List<Reservation> _reservations = [];
+  List<ParkingSpot> _parkingSpots = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+    _startAutoRefresh();
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  void _startAutoRefresh() {
+    // Timer automatycznie odświeża dane co 10 sekund
+    _timer = Timer.periodic(const Duration(seconds: 15), (timer) async {
+      _fetchAndUpdateData();
+    });
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      await _fetchAndUpdateData();
+    } catch (e) {
+      debugPrint('Error loading initial data: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchAndUpdateData() async {
+    try {
+      final data = await _fetchData();
+      setState(() {
+        _reservations = data['reservations'];
+        _parkingSpots = data['parkingSpots'];
+      });
+    } catch (e) {
+      debugPrint('Error fetching and updating data: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> _fetchData() async {
     final secureStorage = GetIt.instance<SecureStorageService>();
     final token = await secureStorage.getToken();
 
@@ -22,67 +80,53 @@ class HomeView extends StatelessWidget {
     final parkingSpots = await ApiService.getParkingStatus();
     final reservations = await ApiService.fetchAllReservations();
 
+    final activeReservations = reservations
+        .where((r) => r.status.toLowerCase() != 'cancelled')
+        .toList();
+
+    debugPrint('Active Reservations: $activeReservations');
+    debugPrint('Parking Spots: $parkingSpots');
+
     return {
-      'token': token,
       'parkingSpots': parkingSpots,
-      'reservations': reservations,
+      'reservations': activeReservations,
     };
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _loadData(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data == null) {
-          return const Center(child: Text('No data available'));
-        }
-
-        final data = snapshot.data!;
-        final parkingSpots = (data['parkingSpots'] as List<ParkingSpot>)
-          ..sort((a, b) {
-            final regex = RegExp(r'([A-Z]+)(\d+)');
-            final matchA = regex.firstMatch(a.prettyId ?? '');
-            final matchB = regex.firstMatch(b.prettyId ?? '');
-
-            if (matchA == null || matchB == null) return 0;
-
-            final sectionA = matchA.group(1)!;
-            final sectionB = matchB.group(1)!;
-            final numberA = int.parse(matchA.group(2)!);
-            final numberB = int.parse(matchB.group(2)!);
-
-            if (sectionA == sectionB) {
-              return numberA.compareTo(numberB);
-            } else {
-              return sectionA.compareTo(sectionB);
-            }
-          });
-        final reservations = data['reservations'];
-
-        return Padding(
+    return Stack(
+      children: [
+        Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
               Expanded(
                 flex: 3,
-                child: ParkingGrid(parkingSpots: parkingSpots),
+                child: ParkingGrid(parkingSpots: _parkingSpots),
               ),
               Expanded(
                 flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: ReservationsSection(reservations: reservations, forAll: true),
+                child: ReservationsSection(
+                  reservations: _reservations,
+                  forAll: true,
+                  canCancelHere: false,
+                  onReservationChanged: _fetchAndUpdateData, // Callback do odświeżania danych
                 ),
               ),
             ],
           ),
-        );
-      },
+        ),
+        if (_isLoading)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black54,
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
