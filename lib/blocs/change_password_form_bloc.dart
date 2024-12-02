@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:http/http.dart' as http;
-import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:smart_parking/services/service_locator.dart';
 
 class ChangePasswordFormBloc extends FormBloc<String, String> {
   static final String _baseUrl =
@@ -21,21 +22,20 @@ class ChangePasswordFormBloc extends FormBloc<String, String> {
     ],
   );
 
-  final AuthBloc authBloc;
   final Logger logger = Logger();
+  final FlutterSecureStorage _storage = locator<FlutterSecureStorage>();
 
-  ChangePasswordFormBloc({required this.authBloc}) {
+  ChangePasswordFormBloc() {
     addFieldBlocs(fieldBlocs: [currentPassword, newPassword]);
   }
 
   @override
-  void onSubmitting() async {
-    final authState = authBloc.state;
-
+  Future<void> onSubmitting() async {
     logger.i('--- Rozpoczęcie procesu zmiany hasła ---');
 
-    if (!authState.isAuthenticated || authState.token == null) {
-      logger.i('--- Użytkownik nie jest zalogowany ---');
+    final token = await _storage.read(key: 'auth_token');
+    if (token == null) {
+      logger.i('--- Brak tokenu uwierzytelniającego ---');
       emitFailure(failureResponse: 'Nie jesteś zalogowany.');
       return;
     }
@@ -46,7 +46,7 @@ class ChangePasswordFormBloc extends FormBloc<String, String> {
         Uri.parse('$_baseUrl$_changePasswordEndpoint'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${authState.token}',
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
           'current_password': currentPassword.value,
@@ -58,7 +58,7 @@ class ChangePasswordFormBloc extends FormBloc<String, String> {
         logger.i('--- Hasło zostało zmienione pomyślnie ---');
         emitSuccess();
       } else {
-        final error = jsonDecode(response.body)['detail'];
+        final error = jsonDecode(response.body)['detail'] ?? 'Błąd serwera.';
         logger.i('--- Błąd serwera: $error ---');
         emitFailure(failureResponse: error);
       }

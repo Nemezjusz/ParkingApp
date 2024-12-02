@@ -1,8 +1,10 @@
-import 'dart:convert';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:logger/logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:smart_parking/services/service_locator.dart';
 
 class LoginFormBloc extends FormBloc<String, String> {
   static final String _baseUrl =
@@ -19,11 +21,11 @@ class LoginFormBloc extends FormBloc<String, String> {
   final TextFieldBloc password = TextFieldBloc(
     validators: [
       FieldBlocValidators.required,
-      // FieldBlocValidators.passwordMin6Chars,  // Tymczasowo wyłączone bo hasło to 2137
     ],
   );
 
   final Logger logger = Logger();
+  final FlutterSecureStorage _storage = locator<FlutterSecureStorage>();
 
   LoginFormBloc() {
     addFieldBlocs(
@@ -39,7 +41,6 @@ class LoginFormBloc extends FormBloc<String, String> {
     logger.i('--- Rozpoczęcie procesu logowania ---');
 
     try {
-      logger.i('--- Wysłanie żądania logowania do $_baseUrl$_loginEndpoint ---');
       final response = await http.post(
         Uri.parse('$_baseUrl$_loginEndpoint'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -52,6 +53,12 @@ class LoginFormBloc extends FormBloc<String, String> {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         final token = responseData['access_token'];
+
+        await _storage.write(key: 'auth_token', value: token);
+        await _storage.write(
+            key: 'auth_expiry',
+            value: DateTime.now().add(Duration(days: 7)).toIso8601String());
+        await _storage.write(key: 'user_email', value: email.value);
 
         logger.i('--- Logowanie zakończone sukcesem ---');
         emitSuccess(successResponse: token);

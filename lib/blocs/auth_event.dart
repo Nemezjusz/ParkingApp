@@ -1,10 +1,10 @@
-abstract class AuthEvent {}
+// abstract class AuthEvent {}
 
-class LoggedIn extends AuthEvent {
-  final String token;
-  final String userEmail;
+// class LoggedIn extends AuthEvent {
+//   final String token;
+//   final String userEmail;
 
-  LoggedIn(this.token, this.userEmail);
-}
+//   LoggedIn(this.token, this.userEmail);
+// }
 
-class LoggedOut extends AuthEvent {}
+// class LoggedOut extends AuthEvent {}

@@ -1,39 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:smart_parking/blocs/login_form_bloc.dart';
-import 'package:smart_parking/blocs/auth_bloc.dart';
-import 'package:smart_parking/blocs/auth_event.dart';
+import 'package:smart_parking/navigation/app_router_paths.dart';
 import 'package:smart_parking/widgets/dialogs/loading_dialog.dart';
 import 'package:smart_parking/widgets/fields/input_widget.dart';
 import 'package:smart_parking/widgets/primary_button.dart';
-import 'package:smart_parking/screens/parking_map_screen.dart';
 import 'package:smart_parking/constants/constants.dart';
-import 'dart:convert';
+import 'package:go_router/go_router.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
-
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  String? getUserEmailFromToken(String token) {
-    try {
-      final parts = token.split('.');
-      if (parts.length != 3) {
-        return null;
-      }
-
-      final payload = parts[1];
-      final normalized = base64Url.normalize(payload);
-      final decoded = utf8.decode(base64Url.decode(normalized));
-      final Map<String, dynamic> payloadMap = json.decode(decoded);
-      return payloadMap['email'] as String?;
-    } catch (e) {
-      return null;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,20 +25,11 @@ class _LoginScreenState extends State<LoginScreen> {
               onSubmitting: (context, state) {
                 LoadingDialog.show(context);
               },
-              onSuccess: (context, state) {
+              onSuccess: (context, state) async {
                 LoadingDialog.hide(context);
 
-                final token = state.successResponse!;
-
-                final userEmail = getUserEmailFromToken(token) ?? '';
-                context.read<AuthBloc>().add(LoggedIn(token, userEmail));
-
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ParkingMapScreen(),
-                  ),
-                );
+                // Przekierowanie po zalogowaniu.
+                context.go(AppRouterPaths.views);
               },
               onFailure: (context, state) {
                 LoadingDialog.hide(context);
@@ -74,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 LoadingDialog.show(context);
               },
               onSubmissionFailed: (context, state) {
-                Navigator.of(context).pop();
+                context.pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text("Check your credentials and try again!"),
@@ -84,8 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: SafeArea(
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: kDefaultPadding),
+                    padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [

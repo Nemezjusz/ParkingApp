@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
-import 'package:smart_parking/widgets/custom_title.dart';
-import 'package:smart_parking/widgets/primary_button.dart';
 import 'package:smart_parking/blocs/reservation_form_bloc.dart';
-import 'package:smart_parking/blocs/parking_spot_bloc.dart';
 import 'package:smart_parking/models/parking_spot.dart';
-import 'package:dropdown_search/dropdown_search.dart';
+import 'package:smart_parking/screens/views/universal/section_header.dart';
+import 'package:smart_parking/widgets/primary_button.dart';
+import 'package:smart_parking/widgets/fields/input_widget.dart';
+import 'package:intl/intl.dart';
 
 class ReservationForm extends StatelessWidget {
   const ReservationForm({super.key});
@@ -14,109 +14,74 @@ class ReservationForm extends StatelessWidget {
   Widget build(BuildContext context) {
     final reservationFormBloc = context.read<ReservationFormBloc>();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const CustomTitle(
-          icon: Icons.book_online,
-          title: 'Reserve a Parking Spot',
-        ),
-        const SizedBox(height: 16),
+    return FormBlocListener<ReservationFormBloc, String, String>(
+      onSubmitting: (context, state) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+      onSuccess: (context, state) async {
+        Navigator.of(context).pop(); // Close the dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(state.successResponse!)),
+        );
 
-        // Parking Spot Selection
-        BlocBuilder<ParkingSpotBloc, ParkingSpotState>(
-          builder: (context, state) {
-            if (state is ParkingSpotLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is ParkingSpotLoaded) {
-              final freeSpots = state.parkingSpots
-                  .where((spot) => spot.status == 'free')
-                  .toList();
-              if (freeSpots.isEmpty) {
-                return const Text('No free parking spots available');
-              }
-              return DropdownSearch<ParkingSpot>(
-                items: freeSpots,
-                itemAsString: (ParkingSpot spot) => spot.prettyId,
-                onChanged: (ParkingSpot? selectedSpot) {
-                  reservationFormBloc.parkingSpotId
-                      .updateValue(selectedSpot?.id ?? '');
-                },
-                selectedItem: null, // Placeholder jako brak początkowej wartości
-                dropdownDecoratorProps: DropDownDecoratorProps(
-                  dropdownSearchDecoration: InputDecoration(
-                    hintText: "Choose a place...", // Placeholder
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.local_parking),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                popupProps: PopupProps.menu(
-                  constraints: const BoxConstraints(maxHeight: 300),
-                  showSearchBox: true,
-                ),
-              );
-            } else if (state is ParkingSpotError) {
-              return Text('Error: ${state.message}');
-            } else {
-              return const SizedBox.shrink();
-            }
-          },
-        ),
-        const SizedBox(height: 16),
+        // Refresh available parking spots
+        await reservationFormBloc.refreshAvailableSpots();
+      },
+      onFailure: (context, state) {
+        Navigator.of(context).pop(); // Close the dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(state.failureResponse!)),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SectionHeader(
+                icon: Icons.book_online, title: 'Reserve a Spot'),
+            const SizedBox(height: 16),
 
-        // Date Picker
-        GestureDetector(
-          onTap: () async {
-            final DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: reservationFormBloc.reservationDate.value ??
-                  DateTime.now(), // Obecna data jako początkowa
+            // Parking Spot Selection
+            InputWidget<ParkingSpot>(
+              hintText: 'Select a Spot',
+              prefixIcon: Icons.local_parking,
+              fieldBloc: reservationFormBloc.parkingSpot,
+              fieldType: FieldType.dropdown,
+              items: reservationFormBloc.parkingSpot.state.items,
+              itemBuilder: (context, spot) => Text(
+                spot.prettyId ?? 'Unknown Spot',
+                style: const TextStyle(color: Colors.black),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Date Picker
+            InputWidget<DateTime>(
+              hintText: 'Reservation Date',
+              prefixIcon: Icons.calendar_today,
+              fieldBloc: reservationFormBloc.reservationDate,
+              fieldType: FieldType.date,
               firstDate: DateTime.now(),
               lastDate: DateTime.now().add(const Duration(days: 30)),
-            );
-            if (pickedDate != null) {
-              reservationFormBloc.reservationDate.updateValue(pickedDate);
-              (context as Element).markNeedsBuild();
-            }
-          },
-          child: BlocBuilder<ReservationFormBloc, FormBlocState>(
-            builder: (context, state) {
-              return InputDecorator(
-                decoration: InputDecoration(
-                  labelText: "Date",
-                  prefixIcon: const Icon(Icons.calendar_today),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  DateFormat('yyyy-MM-dd').format(
-                      reservationFormBloc.reservationDate.value ??
-                          DateTime.now()), // Wyświetl obecną datę
-                  style: const TextStyle(color: Colors.black),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 16),
 
-        // Submit Button
-        SizedBox(
-          width: double.infinity,
-          child: PrimaryButton(
-            text: "Confirm",
-            press: () => reservationFormBloc.submit(),
-            color: Colors.blueAccent,
-            textColor: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            elevation: 5,
-          ),
+            // Submit Button
+            PrimaryButton(
+              text: "Confirm",
+              press: reservationFormBloc.submit,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
+

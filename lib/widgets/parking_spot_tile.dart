@@ -10,6 +10,7 @@ class ParkingSpotTile extends StatelessWidget {
     required this.id,
     required this.status,
     required this.onTap,
+    required MaterialColor color,
   }) : super(key: key);
 
   @override
@@ -36,20 +37,29 @@ class ParkingSpotTile extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6.0),
         padding: const EdgeInsets.all(20.0),
-        width: 120, // Zmniejszona szerokość
+        width: 150, // Zmniejszona szerokość
         decoration: BoxDecoration(
           border: Border.all(color: borderColor, width: 2),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: Center(
-          child: Text(
-            id,
-            style: TextStyle(
-              color: borderColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (/*status.toLowerCase()*/ 'occupied' == 'occupied')
+              Image.asset(
+                height: 50,
+                'assets/images/car.png', // Ścieżka do obrazka
+                fit: BoxFit.contain,
+              ),
+            Text(
+              id,
+              style: TextStyle(
+          color: borderColor,
+          fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
+            
+          ],
         ),
       ),
     );

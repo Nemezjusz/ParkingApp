@@ -34,6 +34,10 @@ dependencies:
   dropdown_search: ^5.0.2
   equatable: ^2.0.7
   flutter_dotenv: ^5.2.1
+  go_router: ^14.6.1
+  flutter_secure_storage: ^9.2.2
+  get_it: ^8.0.2
+  adaptive_theme: ^3.6.0
 
 
 dev_dependencies:

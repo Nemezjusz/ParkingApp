@@ -1,48 +1,83 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_parking/blocs/auth_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:smart_parking/blocs/auth_event.dart';
-import 'package:smart_parking/blocs/theme_bloc.dart';
-import 'package:smart_parking/screens/login_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smart_parking/navigation/app_router_paths.dart';
 import 'package:smart_parking/widgets/settings_tile.dart';
 import 'package:smart_parking/constants/constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:smart_parking/services/push_notification_service.dart';
+import 'package:smart_parking/services/secure_storage_service.dart';
+import 'package:smart_parking/screens/login_screen.dart';
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:smart_parking/screens/change_password_screen.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+class SettingsView extends StatefulWidget {
+  const SettingsView({Key? key}) : super(key: key);
 
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  _SettingsViewState createState() => _SettingsViewState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _SettingsViewState extends State<SettingsView> {
+  final SecureStorageService _secureStorage = SecureStorageService();
+
   String fullName = 'Guest';
   String email = 'Not available';
+
+  bool isDarkMode = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadThemePreference();
   }
 
-  void _loadUserData() {
-    final authState = context.read<AuthBloc>().state;
+  Future<void> _loadUserData() async {
+    final token = await _secureStorage.getToken();
 
-    if (authState.isAuthenticated && authState.token != null) {
-      Map<String, dynamic> decodedToken = JwtDecoder.decode(authState.token!);
+    if (token != null && JwtDecoder.isExpired(token) == false) {
+      final decodedToken = JwtDecoder.decode(token);
       setState(() {
         fullName = decodedToken['full_name'] ?? 'Guest';
         email = decodedToken['email'] ?? 'Not available';
       });
+    } else {
+      setState(() {
+        fullName = 'Guest';
+        email = 'Not available';
+      });
     }
   }
 
+  Future<void> _loadThemePreference() async {
+    final savedThemeMode = await AdaptiveTheme.getThemeMode();
+    setState(() {
+      isDarkMode = savedThemeMode == AdaptiveThemeMode.dark;
+    });
+  }
+
+  void _toggleDarkMode(bool value) {
+    setState(() {
+      isDarkMode = value;
+      if (value) {
+        AdaptiveTheme.of(context).setDark();
+      } else {
+        AdaptiveTheme.of(context).setLight();
+      }
+    });
+  }
+
+  Future<void> _logout() async {
+  await _secureStorage.clearToken();
+
+  // Nawigacja za pomocą GoRouter
+  if (context.mounted) {
+    context.go(AppRouterPaths.login);
+  }
+}
+
   @override
   Widget build(BuildContext context) {
-    // Pobranie aktualnego motywu
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
@@ -95,17 +130,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SettingsTile.switchTileWidget(
-                      context: context,
-                      icon: Icons.dark_mode,
-                      title: 'Dark Mode',
-                      subtitle: 'Enable Dark Mode',
-                      value: context.watch<ThemeBloc>().state.isDarkMode,
-                      onChanged: (bool value) {
-                        context.read<ThemeBloc>().add(ToggleTheme());
-                      },
+                    SwitchListTile(
+                      title: Text(
+                        'App Theme',
+                        style: textTheme.bodyMedium,
+                      ),
+                      subtitle: Text(
+                        'Switch between Light and Dark theme',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: textTheme.bodyMedium?.color?.withOpacity(0.7),
+                        ),
+                      ),
+                      value: isDarkMode,
+                      onChanged: _toggleDarkMode,
+                      secondary: Icon(
+                        isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                        color: theme.primaryColor,
+                      ),
                     ),
-                    NotificationsSwitch(),
+                    const NotificationsSwitch(),
                     SettingsTile(
                       icon: Icons.lock_outline,
                       title: 'Change Password',
@@ -114,7 +157,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => ChangePasswordScreen()),
+                            builder: (context) => const ChangePasswordScreen(),
+                          ),
                         );
                       },
                     ),
@@ -130,23 +174,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.exit_to_app,
                   title: 'Logout',
                   subtitle: 'Sign out of your account',
-                  onTap: () {
-                    context.read<AuthBloc>().add(LoggedOut());
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LoginScreen(),
-                      ),
-                    );
-                  },
+                  onTap: _logout,
                 ),
               ),
-              const SizedBox(height: 100),
-              Text(
-                '© 2024',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -186,25 +216,28 @@ class _NotificationsSwitchState extends State<NotificationsSwitch> {
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isSubscribed', value);
-
-    // PushNotificationService pushService = PushNotificationService();
-    // if (value) {
-    //   pushService.subscribeToTopic('all');
-    // } else {
-    //   pushService.unsubscribeFromTopic('all');
-    // }
   }
 
   @override
   Widget build(BuildContext context) {
-
-    return SettingsTile.switchTileWidget(
-      context: context,
-      icon: Icons.notifications,
-      title: 'Notifications',
-      subtitle: 'Allow Notifications',
+    final theme = Theme.of(context);
+    return SwitchListTile(
+      title: Text(
+        'Notifications',
+        style: theme.textTheme.bodyMedium,
+      ),
+      subtitle: Text(
+        'Enable or disable notifications',
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+        ),
+      ),
       value: _isSubscribed,
       onChanged: _toggleNotifications,
+      secondary: Icon(
+        Icons.notifications,
+        color: theme.primaryColor,
+      ),
     );
   }
 }

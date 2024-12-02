@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:smart_parking/blocs/change_password_form_bloc.dart';
 import 'package:smart_parking/widgets/dialogs/loading_dialog.dart';
-import 'package:smart_parking/blocs/auth_bloc.dart';
 import 'package:smart_parking/widgets/fields/input_widget.dart';
 import 'package:smart_parking/widgets/primary_button.dart';
 
@@ -11,10 +10,8 @@ class ChangePasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authBloc = context.read<AuthBloc>();
-
     return BlocProvider(
-      create: (context) => ChangePasswordFormBloc(authBloc: authBloc),
+      create: (context) => ChangePasswordFormBloc(),
       child: Builder(
         builder: (context) {
           final formBloc = context.read<ChangePasswordFormBloc>();
@@ -23,7 +20,6 @@ class ChangePasswordScreen extends StatelessWidget {
             appBar: AppBar(
               title: const Text('Change Password'),
               backgroundColor: Theme.of(context).primaryColor,
-              centerTitle: true,
               elevation: 2,
             ),
             body: FormBlocListener<ChangePasswordFormBloc, String, String>(
@@ -31,26 +27,14 @@ class ChangePasswordScreen extends StatelessWidget {
               onSuccess: (context, state) {
                 LoadingDialog.hide(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Password changed successfully')),
+                  const SnackBar(content: Text('Password changed successfully')),
                 );
                 Navigator.pop(context);
               },
               onFailure: (context, state) {
                 LoadingDialog.hide(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.failureResponse!)),
-                );
-              },
-              onLoading: (context, state) {
-                LoadingDialog.show(context);
-              },
-              onSubmissionFailed: (context, state) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Check your credentials and try again!"),
-                  ),
+                  SnackBar(content: Text(state.failureResponse ?? 'Error')),
                 );
               },
               child: SingleChildScrollView(

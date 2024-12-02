@@ -1,48 +1,20 @@
 // lib/blocs/theme_bloc.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-// Events
-abstract class ThemeEvent {}
-
-class ToggleTheme extends ThemeEvent {}
-
-// States
-class ThemeState {
-  final ThemeData themeData;
-  final bool isDarkMode;
-
-  ThemeState({required this.themeData, required this.isDarkMode});
-}
-
-// Bloc
-class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
-  ThemeBloc()
-      : super(ThemeState(
-          themeData: _lightTheme,
-          isDarkMode: false,
-        )) {
-    on<ToggleTheme>((event, emit) {
-      final newIsDarkMode = !state.isDarkMode;
-      if (newIsDarkMode) {
-        emit(ThemeState(
-          themeData: _darkTheme,
-          isDarkMode: newIsDarkMode,
-        ));
-      } else {
-        emit(ThemeState(
-          themeData: _lightTheme,
-          isDarkMode: newIsDarkMode,
-        ));
-      }
-    });
-  }
-
-  // Definicja motywu jasnego
-  static final ThemeData _lightTheme = ThemeData(
+class AppTheme {
+  static final ThemeData lightTheme = ThemeData.light().copyWith(
     brightness: Brightness.light,
     primaryColor: const Color(0xFFc6ad8f), // #c6ad8f
     scaffoldBackgroundColor: const Color(0xFFfef3e9), // #fef3e9
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFFc6ad8f),
+      iconTheme: IconThemeData(color: Colors.white),
+      titleTextStyle: TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
     colorScheme: const ColorScheme.light(
       primary: Color(0xFFc6ad8f),
       secondary: Color(0xFFebe0d6),
@@ -61,20 +33,11 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
       titleSmall: TextStyle(
           color: Colors.black, fontSize: 20, fontWeight: FontWeight.normal),
     ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFFc6ad8f),
-      iconTheme: IconThemeData(color: Colors.white),
-      titleTextStyle: TextStyle(
-        color: Colors.white,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
     iconTheme: const IconThemeData(color: Color(0xFFc6ad8f)),
     switchTheme: SwitchThemeData(
       thumbColor: MaterialStateProperty.all(const Color(0xFFc6ad8f)),
-      trackColor: MaterialStateProperty.all(
-          const Color(0xFFc6ad8f).withOpacity(0.5)),
+      trackColor:
+          MaterialStateProperty.all(const Color(0xFFc6ad8f).withOpacity(0.5)),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Color(0xFFfef3e9),
@@ -92,11 +55,19 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     ),
   );
 
-  // Definicja motywu ciemnego
-  static final ThemeData _darkTheme = ThemeData(
+  static final ThemeData darkTheme = ThemeData.dark().copyWith(
     brightness: Brightness.dark,
     primaryColor: const Color(0xFFc6ad8f), // #c6ad8f
     scaffoldBackgroundColor: const Color(0xFF22333c), // #22333c
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFFc6ad8f),
+      iconTheme: IconThemeData(color: Colors.white),
+      titleTextStyle: TextStyle(
+        color: Colors.white,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
     colorScheme: const ColorScheme.dark(
       primary: Color(0xFFc6ad8f),
       secondary: Color(0xFFebe0d6),
@@ -115,20 +86,11 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
       titleSmall: TextStyle(
           color: Colors.white, fontSize: 20, fontWeight: FontWeight.normal),
     ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFFc6ad8f),
-      iconTheme: IconThemeData(color: Colors.white),
-      titleTextStyle: TextStyle(
-        color: Colors.white,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
     iconTheme: const IconThemeData(color: Color(0xFFc6ad8f)),
     switchTheme: SwitchThemeData(
       thumbColor: MaterialStateProperty.all(const Color(0xFFc6ad8f)),
-      trackColor: MaterialStateProperty.all(
-          const Color(0xFFc6ad8f).withOpacity(0.5)),
+      trackColor:
+          MaterialStateProperty.all(const Color(0xFFc6ad8f).withOpacity(0.5)),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Color(0xFF22333c),

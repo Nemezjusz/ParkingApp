@@ -1,79 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:smart_parking/services/api_service.dart';
-import 'package:smart_parking/widgets/dialogs/loading_dialog.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:smart_parking/blocs/auth_bloc.dart';
-import 'package:smart_parking/blocs/auth_state.dart';
+import 'package:intl/intl.dart';
 import 'package:smart_parking/models/reservation.dart';
+import 'package:smart_parking/widgets/dialogs/loading_dialog.dart';
+import 'package:smart_parking/services/api_service.dart';
 
 class ReservationItem extends StatelessWidget {
   final Reservation reservation;
-  final String date;
-  final VoidCallback onReservationCancelled;
+  final VoidCallback? onReservationUpdated; // Callback dla odświeżenia
 
   const ReservationItem({
     Key? key,
     required this.reservation,
-    required this.date,
-    required this.onReservationCancelled,
+    this.onReservationUpdated,
   }) : super(key: key);
 
-  void _cancelReservation(BuildContext context) async {
-    // Dodaj logowanie daty przed wysłaniem do API
-    print('Cancelling reservation with date: $date');
-
-    // Pokaż potwierdzenie
-    bool? confirm = await showDialog<bool>(
+  Future<void> _cancelReservation(BuildContext context) async {
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cancel Reservation?'),
         content: Text(
-            'Are you sure you want to cancel the reservation for spot ${reservation.prettyId}?'),
+          'Do you want to cancel the reservation for spot ${reservation.prettyId}?',
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('No'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.pop(context, true),
             child: const Text('Yes'),
           ),
         ],
       ),
     );
 
-    if (confirm != null && confirm) {
+    if (confirm == true) {
       LoadingDialog.show(context);
       try {
-        final authState = context.read<AuthBloc>().state;
-        if (authState is Authenticated) {
-          await ApiService.cancelReservation(
-              reservation.parkingSpotId, date, authState.token!);
-          LoadingDialog.hide(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Reservation canceled successfully.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          onReservationCancelled();
-        } else {
-          LoadingDialog.hide(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Unauthorized. Please log in again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
+        await ApiService.cancelReservation(
+          reservation.parkingSpotId,
+          reservation.reservationDate,
+        );
+        LoadingDialog.hide(context);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reservation canceled successfully.')),
+        );
+
+        // Wywołanie callbacku po udanej operacji
+        if (onReservationUpdated != null) {
+          onReservationUpdated!();
         }
       } catch (e) {
         LoadingDialog.hide(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to cancel reservation. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e')),
         );
       }
     }
@@ -81,6 +64,16 @@ class ReservationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ignoruj rezerwacje o statusie "cancelled"
+    if (reservation.status.toLowerCase() == 'cancelled') {
+      return const SizedBox.shrink();
+    }
+
+    final formattedDate = DateFormat('yyyy-MM-dd').format(
+      DateTime.parse(reservation.reservationDate),
+    );
+
+    // Ustal ikonę na podstawie statusu
     IconData statusIcon;
     switch (reservation.status.toLowerCase()) {
       case 'reserved':
@@ -97,14 +90,8 @@ class ReservationItem extends StatelessWidget {
         break;
     }
 
+    // Ustal kolor na podstawie statusu
     Color color = _getColorByStatus(reservation.status);
-
-    final authState = context.read<AuthBloc>().state;
-    final currentUserEmail = (authState is Authenticated) ? authState.userEmail : null;
-
-    // Determine if the reservation can be canceled: either reservedBy is null or matches currentUserEmail
-    bool canCancel = (reservation.reservedBy == null) ||
-        (currentUserEmail != null && reservation.reservedBy == currentUserEmail);
 
     return Card(
       color: color.withOpacity(0.9),
@@ -126,7 +113,7 @@ class ReservationItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Date: $date',
+              'Date: $formattedDate',
               style: GoogleFonts.poppins(
                 color: Colors.white70,
               ),
@@ -146,16 +133,15 @@ class ReservationItem extends StatelessWidget {
             ),
           ],
         ),
-        trailing: canCancel
-            ? IconButton(
-                icon: const Icon(Icons.cancel, color: Colors.white, size: 30),
-                onPressed: () => _cancelReservation(context),
-              )
-            : null,
+        trailing: IconButton(
+          icon: const Icon(Icons.cancel, color: Colors.white, size: 30),
+          onPressed: () => _cancelReservation(context),
+        ),
       ),
     );
   }
 
+  // Funkcja do określania koloru na podstawie statusu
   Color _getColorByStatus(String status) {
     switch (status.toLowerCase()) {
       case 'reserved':
@@ -169,3 +155,4 @@ class ReservationItem extends StatelessWidget {
     }
   }
 }
+

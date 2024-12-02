@@ -2,61 +2,96 @@ import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:smart_parking/services/api_service.dart';
 import 'package:logger/logger.dart';
+import 'package:smart_parking/models/parking_spot.dart';
 
 class ReservationFormBloc extends FormBloc<String, String> {
-  final String token;
   final Logger logger = Logger();
 
   // Fields
-  final parkingSpotId = TextFieldBloc(); // Pole miejsca parkingowego
-  final reservationDate = InputFieldBloc<DateTime, Object>(
+  final parkingSpot = SelectFieldBloc<ParkingSpot, dynamic>();
+  final reservationDate = InputFieldBloc<DateTime, dynamic>(
     initialValue: DateTime.now(),
   );
 
-  ReservationFormBloc({required this.token}) {
-    addFieldBlocs(fieldBlocs: [parkingSpotId, reservationDate]);
+  ReservationFormBloc() {
+    addFieldBlocs(fieldBlocs: [parkingSpot, reservationDate]);
+    reservationDate.onValueChanges(onData: (previous, current) async* {
+      await _filterParkingSpotsByDate(current.value);
+    });
+    _loadParkingSpots();
+  }
+
+  Future<void> _loadParkingSpots() async {
+    emitLoading();
+    try {
+      final parkingSpots = await ApiService.getParkingStatus();
+      final freeSpots = parkingSpots.where((spot) => spot.status == 'free').toList();
+      parkingSpot.updateItems(freeSpots);
+      emitLoaded();
+    } catch (e) {
+      logger.e('Error loading parking spots: $e');
+      emitFailure(failureResponse: 'Failed to load parking spots.');
+    }
+  }
+
+  Future<void> _filterParkingSpotsByDate(DateTime? date) async {
+    if (date == null) return;
+
+    emitLoading();
+    try {
+      final parkingSpots = await ApiService.getParkingStatus();
+      final availableSpots = parkingSpots.where((spot) {
+        final isSpotFree = spot.status == 'free' || _isSpotFreeOnDate(spot, date);
+        return isSpotFree;
+      }).toList();
+
+      parkingSpot.updateItems(availableSpots);
+      emitLoaded();
+    } catch (e) {
+      logger.e('Error filtering parking spots by date: $e');
+      emitFailure(failureResponse: 'Failed to filter parking spots by date.');
+    }
+  }
+
+  Future<void> refreshAvailableSpots() async {
+    await _loadParkingSpots();
+  }
+
+  bool _isSpotFreeOnDate(ParkingSpot spot, DateTime date) {
+    return true;
   }
 
   @override
   Future<void> onSubmitting() async {
     logger.i('--- ReservationFormBloc: onSubmitting started ---');
-
     try {
-      final parkingSpotIdValue = parkingSpotId.value;
-      final dateValue = reservationDate.value;
+      final selectedSpot = parkingSpot.value;
+      final date = reservationDate.value;
 
-      logger.i('Parking Spot ID: $parkingSpotIdValue');
-      logger.i('Reservation Date: $dateValue');
-
-      // Walidacja wartości ParkingSpotId
-      if (parkingSpotIdValue.isEmpty) {
-        logger.w('Parking spot ID is empty. Aborting submission.');
-        emitFailure(failureResponse: "Parking spot ID is empty!");
+      if (selectedSpot == null) {
+        emitFailure(failureResponse: "Please select a parking spot.");
         return;
       }
 
-      // Sprawdź połączenie internetowe
-      logger.i('Checking internet connection...');
+      if (date == null) {
+        emitFailure(failureResponse: "Please select a reservation date.");
+        return;
+      }
+
       if (!await _hasInternetConnection()) {
-        emitFailure(failureResponse: "No internet connection!");
+        emitFailure(failureResponse: "No internet connection.");
         return;
       }
 
-      // Wyślij rezerwację
-      logger.i('Sending reservation to backend...');
       await ApiService.reserveParkingSpot(
-        parkingSpotId: parkingSpotIdValue,
-        action: 'reserve',
-        date: dateValue,
-        token: token,
+        parkingSpotId: selectedSpot.id,
+        date: date,
       );
-      logger.i('Reservation sent successfully.');
-
-      emitSuccess(
-          successResponse: "Reservation successful!");
-    } catch (error) {
-      logger.e('Error occurred during reservation: $error');
-      emitFailure(failureResponse: "Error occurred during reservation!");
+      await refreshAvailableSpots(); // Refresh spots after successful reservation
+      emitSuccess(successResponse: "Reservation successful.");
+    } catch (e) {
+      logger.e('Error during reservation: $e');
+      emitFailure(failureResponse: "An error occurred during reservation.");
     } finally {
       logger.i('--- ReservationFormBloc: onSubmitting ended ---');
     }
@@ -71,3 +106,6 @@ class ReservationFormBloc extends FormBloc<String, String> {
     }
   }
 }
+
+
+
