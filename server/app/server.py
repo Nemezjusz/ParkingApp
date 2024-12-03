@@ -27,7 +27,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 180
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-CONFIRMATION_TIMEOUT_MINUTES = 2
+CONFIRMATION_TIMEOUT_MINUTES = 6
 
 class PasswordChange(BaseModel):
     current_password: str
@@ -161,8 +161,9 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
         # sprawdza czy jest rezerwacja datetime.combine(reservation.reservation_date, datetime.min.time()).isoformat()
         if reservation and reservation["reservation_date"]==datetime.combine(datetime.now(timezone.utc).date() ,datetime.min.time()).isoformat():
             current_time = datetime.now(timezone.utc)
-            
-            if "confirmation_deadline" in reservation:
+            if reservation["status"] == "confirmed":
+                update_data["color"] = "RED"
+            elif "confirmation_deadline" in reservation:
                 # Convert confirmation_deadline to UTC aware datetime
                 deadline = reservation["confirmation_deadline"]
                 # MongoDB stores datetime in UTC, but we need to explicitly add timezone info
@@ -171,6 +172,7 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
                 if current_time > deadline:
                     update_data["color"] = "RED_BLINK"
                     update_data["waiting_confirmation"] = False
+                
             else:
                 update_data["waiting_confirmation"] = True
                 update_data["color"] = "BLUE"
@@ -183,6 +185,11 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
                 )
         else:
             update_data["color"] = "RED"
+    
+    elif reservation and spot_status.status == "free" and reservation["status"] == "confirmed":
+        await reservations_col.delete_one({"_id": reservation["_id"]})
+        update_data["color"] = "GREEN"
+
 
     elif reservation and spot_status.status == "free":
         update_data["color"] = "YELLOW"
@@ -192,7 +199,7 @@ async def update_parking_spot_status(spot_status: ParkingSpotStatus):
             {"_id": reservation["_id"]},
             {"$unset": {"confirmation_deadline": ""}}
         )
-
+    
     else:
         update_data["waiting_confirmation"] = False
         update_data["color"] = "GREEN"
@@ -211,16 +218,26 @@ async def confirm_parking(
 ):
     reservation = await reservations_col.find_one({
         "parking_spot_id": confirmation.parking_spot_id,
-        "active": True
+        "reservation_date": datetime.combine(datetime.now(timezone.utc).date(), datetime.min.time()).isoformat(),
+        "confirmation_deadline": {"$exists": True}
     })
     
     if not reservation:
-        raise HTTPException(status_code=404, detail="No active reservation found for this spot")
+        raise HTTPException(status_code=404, detail="No reservation awaiting confirmation found")
     
     if str(reservation["user_id"]) != str(current_user["_id"]):
-        raise HTTPException(status_code=403, detail="You are not authorized to confirm this reservation")
+        raise HTTPException(status_code=403, detail="You are not authorized to confirm the reservation")
     
-    if datetime.now(timezone.utc) > reservation["confirmation_deadline"]:
+    current_time = datetime.now(timezone.utc)
+    deadline = reservation["confirmation_deadline"]
+
+    # Add timezone info to deadline if it's naive
+    if deadline.tzinfo is None:
+        deadline = deadline.replace(tzinfo=timezone.utc)
+    print("Current",current_time)
+    print("Deadline",deadline)
+
+    if current_time > deadline:
         await reservations_col.update_one(
             {"_id": reservation["_id"]},
             {"$set": {"active": False, "status": "expired"}}
@@ -241,30 +258,24 @@ async def confirm_parking(
             "status": "occupied",
             "color": "RED",
             "waiting_confirmation": False,
-            "confirmed_user_id": str(current_user["_id"])
         }}
     )
     
     await reservations_col.update_one(
         {"_id": reservation["_id"]},
-        {"$set": {
-            "status": "confirmed",
-            "confirmation_time": datetime.now(timezone.utc)
-        }}
+        {
+            "$set": {
+                "status": "confirmed",
+                "confirmation_time": datetime.now(timezone.utc)
+            },
+            "$unset": {
+                "confirmation_deadline": ""
+            }
+        }
     )
     
     return {"message": "Parking confirmed successfully"}
 
-def parse_time(time_str):
-    """
-    Parsuje czas w formacie hh:mm na obiekt datetime.time.
-    """
-    if isinstance(time_str, time):
-        return time_str  # Już jest sparsowany
-    try:
-        return datetime.strptime(time_str, "%H:%M").time()
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid time format. Use hh:mm.")
 
 def serialize_dates(doc):
     for key, value in doc.items():
