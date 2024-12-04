@@ -19,6 +19,7 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   late Timer _timer;
   List<Reservation> _userReservations = [];
+  List<Reservation> _allReservations = [];
   List<ParkingSpot> _oldParkingSpots = [];
   List<ParkingSpot> _currentParkingSpots = [];
   bool _isLoading = false;
@@ -48,7 +49,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _startAutoRefresh() {
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       await _fetchAndCompareData();
     });
   }
@@ -60,7 +61,8 @@ class _HomeViewState extends State<HomeView> {
     try {
       final data = await _fetchData();
       setState(() {
-        _userReservations = data['reservations'];
+        _userReservations = data['userReservations'];
+        _allReservations = data['allReservations'];
         _currentParkingSpots = data['parkingSpots'];
         _oldParkingSpots = List.from(_currentParkingSpots);
       });
@@ -101,6 +103,8 @@ class _HomeViewState extends State<HomeView> {
 
       setState(() {
         _oldParkingSpots = newParkingSpots;
+        _allReservations = data['allReservations'];
+        _userReservations = data['userReservations'];
       });
     } catch (e) {
       debugPrint('Error fetching and comparing data: $e');
@@ -116,57 +120,151 @@ class _HomeViewState extends State<HomeView> {
     }
 
     final parkingSpots = await ApiService.getParkingStatus();
-    final reservations = await ApiService.fetchUserReservations();
+    final allReservations = await ApiService.fetchAllReservations();
+    final userReservations = await ApiService.fetchUserReservations();
 
     return {
       'parkingSpots': parkingSpots,
-      'reservations': reservations,
+      'allReservations': allReservations,
+      'userReservations': userReservations,
     };
   }
 
   void _triggerNotificationAndDialog(ParkingSpot spot) async {
-    // Show local notification
-    const androidDetails = AndroidNotificationDetails(
-      'parking_channel_id',
-      'Parking Notifications',
-      importance: Importance.high,
-      priority: Priority.high,
-      channelDescription: 'Notifications related to parking',
-    );
-    const notificationDetails = NotificationDetails(android: androidDetails);
+  const androidDetails = AndroidNotificationDetails(
+    'parking_channel_id',
+    'Parking Notifications',
+    importance: Importance.high,
+    priority: Priority.high,
+    channelDescription: 'Notifications related to parking',
+  );
+  const notificationDetails = NotificationDetails(android: androidDetails);
 
-    await _notificationsPlugin.show(
-      0,
-      'Parking Alert',
-      'Someone parked on your reserved spot: ${spot.prettyId}',
-      notificationDetails,
-    );
+  // Zaktualizowany tekst powiadomień
+  await _notificationsPlugin.show(
+    0,
+    '🚨 Parking Alert!',
+    'Someone parked on your reserved spot: ${spot.prettyId} (Floor: ${spot.floor})!',
+    notificationDetails,
+  );
 
-    // Show dialog
-    final shouldConfirm = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Confirm Parking'),
-            content: Text(
-                'Someone has parked on your reserved spot (${spot.prettyId}). Do you want to confirm this parking?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('No'),
+  final theme = Theme.of(context);
+  final primaryColor = theme.colorScheme.primary;
+  final textColor = theme.textTheme.bodyLarge?.color ?? Colors.white;
+  const highlightColor = Color(0xFF42A5F5); // Dodany kolor dla wyróżnień
+  final scaffoldBackgroundColor = theme.scaffoldBackgroundColor;
+
+  final shouldConfirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: primaryColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          contentPadding: const EdgeInsets.all(24),
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_rounded,
+                color: Colors.yellow,
+                size: 28,
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Yes'),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Parking Spot Alert!',
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
-        ) ??
-        false;
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Someone has parked on your reserved spot:',
+                style: TextStyle(
+                  color: textColor.withOpacity(0.9),
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: scaffoldBackgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '${spot.prettyId}',
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Floor: ${spot.floor}',
+                      style: TextStyle(
+                        color: textColor.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Do you want to confirm this parking?',
+                style: TextStyle(
+                  color: textColor.withOpacity(0.8),
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('No'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Yes'),
+            ),
+          ],
+        ),
+      ) ??
+      false;
 
-    if (shouldConfirm) {
-      await _confirmParking(spot.id);
-    }
+  if (shouldConfirm) {
+    await _confirmParking(spot.id);
   }
+}
+
 
   Future<void> _confirmParking(String parkingSpotId) async {
     try {
@@ -183,38 +281,40 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Expanded(
-                flex: 3,
-                child: ParkingGrid(parkingSpots: _currentParkingSpots),
-              ),
-              Expanded(
-                flex: 2,
-                child: ReservationsSection(
-                  reservations: _userReservations,
-                  forAll: false,
-                  canCancelHere: false,
-                  onReservationChanged: _fetchAndCompareData,
+    return Scaffold(
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: ParkingGrid(parkingSpots: _currentParkingSpots),
                 ),
-              ),
-            ],
-          ),
-        ),
-        if (_isLoading)
-          Positioned.fill(
-            child: Container(
-              color: Colors.black54,
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+                Expanded(
+                  flex: 2,
+                  child: ReservationsSection(
+                    reservations: _allReservations,
+                    forAll: true,
+                    canCancelHere: false,
+                    onReservationChanged: _fetchAndCompareData,
+                  ),
+                ),
+              ],
             ),
           ),
-      ],
+          if (_isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

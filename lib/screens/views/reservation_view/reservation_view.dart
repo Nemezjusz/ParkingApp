@@ -15,14 +15,16 @@ class ReservationView extends StatefulWidget {
 }
 
 class _ReservationViewState extends State<ReservationView> {
-  late Future<List<Reservation>> _reservationsFuture;
+  late List<Reservation> _currentReservations;
+  bool _isLoading = true;
   late Timer _timer;
 
   @override
   void initState() {
     super.initState();
-    _fetchReservations();
-    _startAutoRefresh();
+    _currentReservations = [];
+    _fetchReservations(); // Initial fetch
+    _startAutoRefresh(); // Start pooling
   }
 
   @override
@@ -32,15 +34,48 @@ class _ReservationViewState extends State<ReservationView> {
   }
 
   void _startAutoRefresh() {
-    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      _fetchReservations();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateReservations();
     });
   }
 
-  void _fetchReservations() {
+  Future<void> _fetchReservations() async {
     setState(() {
-      _reservationsFuture = ApiService.fetchUserReservations();
+      _isLoading = true;
     });
+    try {
+      final newReservations = await ApiService.fetchUserReservations();
+      setState(() {
+        _currentReservations = newReservations;
+      });
+    } catch (e) {
+      debugPrint('Error fetching reservations: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updateReservations() async {
+    try {
+      final newReservations = await ApiService.fetchUserReservations();
+      if (!_areListsEqual(_currentReservations, newReservations)) {
+        setState(() {
+          _currentReservations = newReservations;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error updating reservations: $e');
+    }
+  }
+
+  bool _areListsEqual(List<Reservation> oldList, List<Reservation> newList) {
+    if (oldList.length != newList.length) return false;
+    for (int i = 0; i < oldList.length; i++) {
+      if (oldList[i] != newList[i]) return false;
+    }
+    return true;
   }
 
   void _onReservationAdded() {
@@ -59,24 +94,16 @@ class _ReservationViewState extends State<ReservationView> {
               ReservationForm(onReservationAdded: _onReservationAdded),
               const SizedBox(height: 20),
               Expanded(
-                child: FutureBuilder<List<Reservation>>(
-                  future: _reservationsFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Text('No reservations found.');
-                    }
-                    return ReservationsSection(
-                      reservations: snapshot.data!,
-                      forAll: false,
-                      canCancelHere: true,
-                      onReservationChanged: _fetchReservations,
-                    );
-                  },
-                ),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _currentReservations.isEmpty
+                        ? const Center(child: Text('No reservations found.'))
+                        : ReservationsSection(
+                            reservations: _currentReservations,
+                            forAll: false,
+                            canCancelHere: true,
+                            onReservationChanged: _fetchReservations,
+                          ),
               ),
             ],
           ),
