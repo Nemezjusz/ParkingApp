@@ -31,18 +31,21 @@ class _ParkingGridState extends State<ParkingGrid> {
   }
 
   @override
-  void didUpdateWidget(covariant ParkingGrid oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.availableFloors != widget.availableFloors) {
-      if (!widget.availableFloors.contains(currentFloor) &&
-          widget.availableFloors.isNotEmpty) {
-        setState(() {
-          currentFloor = widget.availableFloors.first;
-        });
-        widget.onFloorChanged?.call(currentFloor);
-      }
+void didUpdateWidget(covariant ParkingGrid oldWidget) {
+  super.didUpdateWidget(oldWidget);
+  if (oldWidget.parkingSpots != widget.parkingSpots) {
+    setState(() {}); // Odbuduj widok po każdej zmianie miejsc parkingowych
+  }
+  if (oldWidget.availableFloors != widget.availableFloors) {
+    if (!widget.availableFloors.contains(currentFloor) &&
+        widget.availableFloors.isNotEmpty) {
+      setState(() {
+        currentFloor = widget.availableFloors.first;
+      });
+      widget.onFloorChanged?.call(currentFloor);
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {

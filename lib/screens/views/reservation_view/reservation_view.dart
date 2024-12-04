@@ -97,7 +97,16 @@ class _ReservationViewState extends State<ReservationView> {
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _currentReservations.isEmpty
-                        ? const Center(child: Text('No reservations found.'))
+                        ? const Center(
+                          child: Text(
+                            'No reservations found.',
+                            style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey,
+                            ),
+                          ),
+                          )
                         : ReservationsSection(
                             reservations: _currentReservations,
                             forAll: false,

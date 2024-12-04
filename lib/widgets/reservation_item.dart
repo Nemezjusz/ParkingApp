@@ -114,7 +114,7 @@ class ReservationItem extends StatelessWidget {
             ),
             if (reservation.reservedBy != null)
               Text(
-                'Reserved By: ${reservation.reservedBy?.replaceAll('BÅaÅ¼ej', 'Błażej')}',
+                'Reserved By: ${reservation.reservedBy?.replaceAll('BÅaÅ¼ej', 'Błażej').replaceAll('KwaÅny', 'Kwaśny').replaceAll('RosÃ³Å', 'Rosół')}',
                 style: GoogleFonts.poppins(
                   color: Colors.white70, // Stały kolor
                 ),
