@@ -5,7 +5,6 @@ import 'package:smart_parking/models/parking_spot.dart';
 import 'package:smart_parking/screens/views/universal/section_header.dart';
 import 'package:smart_parking/widgets/primary_button.dart';
 import 'package:smart_parking/widgets/fields/input_widget.dart';
-import 'package:intl/intl.dart';
 
 class ReservationForm extends StatelessWidget {
   final VoidCallback? onReservationAdded;

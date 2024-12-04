@@ -88,18 +88,18 @@ class ReservationItem extends StatelessWidget {
 
     final primaryColor = Theme.of(context).primaryColor;
     return Card(
-      color: primaryColor.withOpacity(0.9), // Zmieniono na stały kolor
+      color: primaryColor.withOpacity(0.9),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
       elevation: 6,
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: ListTile(
-        leading: Icon(statusIcon, color: Colors.white, size: 30), // Ustawiono biały kolor
+        leading: Icon(statusIcon, color: Colors.white, size: 30),
         title: Text(
           'Spot: ${reservation.prettyId}',
           style: GoogleFonts.poppins(
-            color: Colors.white, // Stały kolor
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -109,21 +109,21 @@ class ReservationItem extends StatelessWidget {
             Text(
               'Date: $formattedDate',
               style: GoogleFonts.poppins(
-                color: Colors.white70, // Stały kolor
+                color: Colors.white70,
               ),
             ),
             if (reservation.reservedBy != null)
               Text(
                 'Reserved By: ${reservation.reservedBy?.replaceAll('BÅaÅ¼ej', 'Błażej').replaceAll('KwaÅny', 'Kwaśny').replaceAll('RosÃ³Å', 'Rosół')}',
                 style: GoogleFonts.poppins(
-                  color: Colors.white70, // Stały kolor
+                  color: Colors.white70,
                 ),
               ),
           ],
         ),
         trailing: canCancelHere
             ? IconButton(
-                icon: Icon(Icons.cancel, color: Colors.white70, size: 30), // Stały kolor
+                icon: Icon(Icons.cancel, color: Colors.white70, size: 30),
                 onPressed: () => _cancelReservation(context),
               )
             : null,

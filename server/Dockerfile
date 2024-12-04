@@ -20,4 +20,18 @@ CMD ["sh", "-c", "python app/manage_users.py add mateusz 'Mateusz Walas' mwalas@
   python app/manage_parking.py add free green 1 8 && \
   python app/manage_parking.py add free green 1 9 && \
   python app/manage_parking.py add free green 1 10 && \
+  python app/manage_parking.py add free green 2 1 && \
+  python app/manage_parking.py add free green 2 2 && \
+  python app/manage_parking.py add free green 2 3 && \
+  python app/manage_parking.py add free green 2 4 && \
+  python app/manage_parking.py add free green 2 5 && \
+  python app/manage_parking.py add free green 2 6 && \
+  python app/manage_parking.py add free green 3 1 && \
+  python app/manage_parking.py add free green 3 2 && \
+  python app/manage_parking.py add free green 3 3 && \
+  python app/manage_parking.py add free green 3 4 && \
+  python app/manage_parking.py add free green 3 5 && \
+  python app/manage_parking.py add free green 3 6 && \
+  python app/manage_parking.py add free green 4 1 && \
   python app/server.py"]
+

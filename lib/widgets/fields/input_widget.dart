@@ -1,9 +1,7 @@
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:smart_parking/models/parking_spot.dart';
-import 'package:smart_parking/widgets/fields/filterable_dropdown_field.dart';
 
 enum FieldType { text, dropdown, date }
 

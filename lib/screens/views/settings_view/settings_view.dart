@@ -6,7 +6,6 @@ import 'package:smart_parking/navigation/app_router_paths.dart';
 import 'package:smart_parking/widgets/settings_tile.dart';
 import 'package:smart_parking/constants/constants.dart';
 import 'package:smart_parking/services/secure_storage_service.dart';
-import 'package:smart_parking/screens/login_screen.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:smart_parking/screens/change_password_screen.dart';
 

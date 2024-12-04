@@ -5,16 +5,12 @@ import 'package:smart_parking/screens/views/universal/section_header.dart';
 
 class ParkingGrid extends StatefulWidget {
   final List<ParkingSpot> parkingSpots;
-  final String currentFloor;
-  final List<String> availableFloors;
   final Function(String)? onFloorChanged;
 
   const ParkingGrid({
     Key? key,
     required this.parkingSpots,
-    this.currentFloor = 'A', // Domyślne piętro
-    this.availableFloors = const ['A', 'B'], // Domyślne piętra
-    this.onFloorChanged, // Funkcja może być opcjonalna
+    this.onFloorChanged,
   }) : super(key: key);
 
   @override
@@ -23,29 +19,41 @@ class ParkingGrid extends StatefulWidget {
 
 class _ParkingGridState extends State<ParkingGrid> {
   late String currentFloor;
+  late List<String> availableFloors;
 
   @override
   void initState() {
     super.initState();
-    currentFloor = widget.currentFloor;
+    availableFloors = _extractFloors(widget.parkingSpots);
+    currentFloor = availableFloors.isNotEmpty ? availableFloors.first : 'A';
   }
 
   @override
-void didUpdateWidget(covariant ParkingGrid oldWidget) {
-  super.didUpdateWidget(oldWidget);
-  if (oldWidget.parkingSpots != widget.parkingSpots) {
-    setState(() {}); // Odbuduj widok po każdej zmianie miejsc parkingowych
-  }
-  if (oldWidget.availableFloors != widget.availableFloors) {
-    if (!widget.availableFloors.contains(currentFloor) &&
-        widget.availableFloors.isNotEmpty) {
+  void didUpdateWidget(covariant ParkingGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.parkingSpots != widget.parkingSpots) {
+      final newFloors = _extractFloors(widget.parkingSpots);
       setState(() {
-        currentFloor = widget.availableFloors.first;
+        availableFloors = newFloors;
+        if (!availableFloors.contains(currentFloor)) {
+          currentFloor = availableFloors.isNotEmpty ? availableFloors.first : 'A';
+          widget.onFloorChanged?.call(currentFloor);
+        }
       });
-      widget.onFloorChanged?.call(currentFloor);
     }
   }
-}
+
+  List<String> _extractFloors(List<ParkingSpot> spots) {
+    final floors = spots.map((spot) {
+      if (spot.prettyId.isNotEmpty) {
+        return spot.prettyId[0].toUpperCase();
+      } else {
+        return 'A'; // Domyślne piętro, jeśli prettyId jest puste
+      }
+    }).toSet().toList();
+    floors.sort(); // Sortowanie pięter alfabetycznie
+    return floors;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,9 +117,9 @@ void didUpdateWidget(covariant ParkingGrid oldWidget) {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SectionHeader(
-                icon: Icons.map,
-                title: 'Parking Map',
-              ),
+          icon: Icons.map,
+          title: 'Parking Map',
+        ),
         // Górna sekcja z nazwą piętra i przyciskami zmiany piętra
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -135,7 +143,8 @@ void didUpdateWidget(covariant ParkingGrid oldWidget) {
                 ),
                 IconButton(
                   icon: const Icon(Icons.arrow_downward),
-                  onPressed: _canMoveDown() ? () => _changeFloor(up: false) : null,
+                  onPressed:
+                      _canMoveDown() ? () => _changeFloor(up: false) : null,
                   color: _canMoveDown()
                       ? Theme.of(context).colorScheme.primary
                       : Colors.grey,
@@ -150,7 +159,7 @@ void didUpdateWidget(covariant ParkingGrid oldWidget) {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-                Icon(Icons.arrow_downward, color: Colors.grey),
+              Icon(Icons.arrow_downward, color: Colors.grey),
               SizedBox(width: 8),
               Text(
                 'Entrance',
@@ -194,27 +203,27 @@ void didUpdateWidget(covariant ParkingGrid oldWidget) {
 
   // Funkcja zmiany piętra
   void _changeFloor({required bool up}) {
-    final currentIndex = widget.availableFloors.indexOf(currentFloor);
+    final currentIndex = availableFloors.indexOf(currentFloor);
     if (up && currentIndex > 0) {
       setState(() {
-        currentFloor = widget.availableFloors[currentIndex - 1];
+        currentFloor = availableFloors[currentIndex - 1];
       });
       widget.onFloorChanged?.call(currentFloor);
-    } else if (!up && currentIndex < widget.availableFloors.length - 1) {
+    } else if (!up && currentIndex < availableFloors.length - 1) {
       setState(() {
-        currentFloor = widget.availableFloors[currentIndex + 1];
+        currentFloor = availableFloors[currentIndex + 1];
       });
       widget.onFloorChanged?.call(currentFloor);
     }
   }
 
   bool _canMoveUp() {
-    return widget.availableFloors.indexOf(currentFloor) > 0;
+    return availableFloors.indexOf(currentFloor) > 0;
   }
 
   bool _canMoveDown() {
-    return widget.availableFloors.indexOf(currentFloor) <
-        (widget.availableFloors.length - 1);
+    return availableFloors.indexOf(currentFloor) <
+        (availableFloors.length - 1);
   }
 
   // Funkcja dialogu rezerwacji

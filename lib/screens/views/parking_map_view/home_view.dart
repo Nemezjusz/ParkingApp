@@ -156,7 +156,6 @@ class _HomeViewState extends State<HomeView> {
     );
     const notificationDetails = NotificationDetails(android: androidDetails);
 
-    // Zaktualizowany tekst powiadomień
     await _notificationsPlugin.show(
       0,
       '🚨 Parking Alert!',
@@ -167,7 +166,6 @@ class _HomeViewState extends State<HomeView> {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
     final textColor = theme.textTheme.bodyLarge?.color ?? Colors.white;
-    const highlightColor = Color(0xFF42A5F5);
     final scaffoldBackgroundColor = theme.scaffoldBackgroundColor;
 
     final shouldConfirm = await showDialog<bool>(

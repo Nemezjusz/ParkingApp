@@ -32,7 +32,7 @@ class ReservationsSectionState extends State<ReservationsSection> {
   @override
   void initState() {
     super.initState();
-    _fetchReservations(); // Pobranie rezerwacji przy inicjalizacji
+    _fetchReservations();
   }
 
   Future<void> _fetchReservations() async {
@@ -43,7 +43,6 @@ class ReservationsSectionState extends State<ReservationsSection> {
     });
 
     try {
-      // Wybór odpowiedniego endpointu w zależności od forAll
       final fetchedReservations = widget.forAll
           ? await ApiService.fetchAllReservations()
           : await ApiService.fetchUserReservations();
