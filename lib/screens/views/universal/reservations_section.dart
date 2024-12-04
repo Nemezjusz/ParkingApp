@@ -32,13 +32,10 @@ class ReservationsSectionState extends State<ReservationsSection> {
   @override
   void initState() {
     super.initState();
-    reservations = widget.reservations;
-    if (reservations.isEmpty) {
-      _retryFetchingReservations();
-    }
+    _fetchReservations(); // Pobranie rezerwacji przy inicjalizacji
   }
 
-  Future<void> _retryFetchingReservations() async {
+  Future<void> _fetchReservations() async {
     if (_isRetrying) return;
 
     setState(() {
@@ -46,7 +43,12 @@ class ReservationsSectionState extends State<ReservationsSection> {
     });
 
     try {
-      final fetchedReservations = await ApiService.fetchAllReservations();
+      // Wybór odpowiedniego endpointu w zależności od forAll
+      final fetchedReservations = widget.forAll
+          ? await ApiService.fetchAllReservations()
+          : await ApiService.fetchUserReservations();
+
+      // Filtrowanie rezerwacji tylko z aktywnym statusem
       final activeReservations = fetchedReservations
           .where((r) => r.status.toLowerCase() != 'cancelled')
           .toList();
@@ -55,7 +57,11 @@ class ReservationsSectionState extends State<ReservationsSection> {
         reservations = activeReservations;
       });
     } catch (e) {
-      print('Error retrying reservations: $e');
+      debugPrint('Error fetching reservations: $e');
+      // Wyświetlenie błędu użytkownikowi
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load reservations: $e')),
+      );
     } finally {
       setState(() {
         _isRetrying = false;

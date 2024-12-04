@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:smart_parking/models/parking_spot.dart';
 import 'package:smart_parking/models/reservation.dart';
 import 'package:smart_parking/screens/views/parking_map_view/parking_grid.dart';
@@ -18,13 +18,16 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   late Timer _timer;
-  List<Reservation> _reservations = [];
-  List<ParkingSpot> _parkingSpots = [];
+  List<Reservation> _userReservations = [];
+  List<ParkingSpot> _oldParkingSpots = [];
+  List<ParkingSpot> _currentParkingSpots = [];
   bool _isLoading = false;
+  late FlutterLocalNotificationsPlugin _notificationsPlugin;
 
   @override
   void initState() {
     super.initState();
+    _initializeNotifications();
     _loadInitialData();
     _startAutoRefresh();
   }
@@ -35,10 +38,18 @@ class _HomeViewState extends State<HomeView> {
     super.dispose();
   }
 
+  void _initializeNotifications() {
+    _notificationsPlugin = FlutterLocalNotificationsPlugin();
+    const initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    _notificationsPlugin.initialize(initializationSettings);
+  }
+
   void _startAutoRefresh() {
-    // Timer automatycznie odświeża dane co 10 sekund
-    _timer = Timer.periodic(const Duration(seconds: 15), (timer) async {
-      _fetchAndUpdateData();
+    _timer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      await _fetchAndCompareData();
     });
   }
 
@@ -47,7 +58,12 @@ class _HomeViewState extends State<HomeView> {
       _isLoading = true;
     });
     try {
-      await _fetchAndUpdateData();
+      final data = await _fetchData();
+      setState(() {
+        _userReservations = data['reservations'];
+        _currentParkingSpots = data['parkingSpots'];
+        _oldParkingSpots = List.from(_currentParkingSpots);
+      });
     } catch (e) {
       debugPrint('Error loading initial data: $e');
     } finally {
@@ -57,15 +73,37 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  Future<void> _fetchAndUpdateData() async {
+  Future<void> _fetchAndCompareData() async {
     try {
       final data = await _fetchData();
+      final newParkingSpots = data['parkingSpots'];
+
+      for (final spot in newParkingSpots) {
+        final oldSpot = _oldParkingSpots.firstWhere(
+          (old) => old.id == spot.id,
+          orElse: () => ParkingSpot(
+            id: '',
+            prettyId: '',
+            status: '',
+            color: '',
+            floor: 0,
+            spotNumber: 0,
+            waitingConfirmation: false,
+          ),
+        );
+
+        if (oldSpot.color.toLowerCase() != 'blue' &&
+            spot.color.toLowerCase() == 'blue' &&
+            _userReservations.any((res) => res.parkingSpotId == spot.id)) {
+          _triggerNotificationAndDialog(spot);
+        }
+      }
+
       setState(() {
-        _reservations = data['reservations'];
-        _parkingSpots = data['parkingSpots'];
+        _oldParkingSpots = newParkingSpots;
       });
     } catch (e) {
-      debugPrint('Error fetching and updating data: $e');
+      debugPrint('Error fetching and comparing data: $e');
     }
   }
 
@@ -78,19 +116,69 @@ class _HomeViewState extends State<HomeView> {
     }
 
     final parkingSpots = await ApiService.getParkingStatus();
-    final reservations = await ApiService.fetchAllReservations();
-
-    final activeReservations = reservations
-        .where((r) => r.status.toLowerCase() != 'cancelled')
-        .toList();
-
-    debugPrint('Active Reservations: $activeReservations');
-    debugPrint('Parking Spots: $parkingSpots');
+    final reservations = await ApiService.fetchUserReservations();
 
     return {
       'parkingSpots': parkingSpots,
-      'reservations': activeReservations,
+      'reservations': reservations,
     };
+  }
+
+  void _triggerNotificationAndDialog(ParkingSpot spot) async {
+    // Show local notification
+    const androidDetails = AndroidNotificationDetails(
+      'parking_channel_id',
+      'Parking Notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+      channelDescription: 'Notifications related to parking',
+    );
+    const notificationDetails = NotificationDetails(android: androidDetails);
+
+    await _notificationsPlugin.show(
+      0,
+      'Parking Alert',
+      'Someone parked on your reserved spot: ${spot.prettyId}',
+      notificationDetails,
+    );
+
+    // Show dialog
+    final shouldConfirm = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Parking'),
+            content: Text(
+                'Someone has parked on your reserved spot (${spot.prettyId}). Do you want to confirm this parking?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Yes'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (shouldConfirm) {
+      await _confirmParking(spot.id);
+    }
+  }
+
+  Future<void> _confirmParking(String parkingSpotId) async {
+    try {
+      await ApiService.confirmParkingSpot(parkingSpotId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Parking confirmed successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to confirm parking: $e')),
+      );
+    }
   }
 
   @override
@@ -103,15 +191,15 @@ class _HomeViewState extends State<HomeView> {
             children: [
               Expanded(
                 flex: 3,
-                child: ParkingGrid(parkingSpots: _parkingSpots),
+                child: ParkingGrid(parkingSpots: _currentParkingSpots),
               ),
               Expanded(
                 flex: 2,
                 child: ReservationsSection(
-                  reservations: _reservations,
-                  forAll: true,
+                  reservations: _userReservations,
+                  forAll: false,
                   canCancelHere: false,
-                  onReservationChanged: _fetchAndUpdateData, // Callback do odświeżania danych
+                  onReservationChanged: _fetchAndCompareData,
                 ),
               ),
             ],

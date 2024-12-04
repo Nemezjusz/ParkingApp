@@ -57,7 +57,7 @@ class LoginFormBloc extends FormBloc<String, String> {
         await _storage.write(key: 'auth_token', value: token);
         await _storage.write(
             key: 'auth_expiry',
-            value: DateTime.now().add(Duration(days: 7)).toIso8601String());
+            value: DateTime.now().add(Duration(hours: 2)).toIso8601String());
         await _storage.write(key: 'user_email', value: email.value);
 
         logger.i('--- Logowanie zakończone sukcesem ---');

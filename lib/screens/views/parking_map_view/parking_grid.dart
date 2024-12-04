@@ -70,7 +70,7 @@ class _ParkingGridState extends State<ParkingGrid> {
             // Lewa strona parkingu
             ParkingSpotTile(
               id: leftSpot.prettyId ?? 'Spot ${i + 1}',
-              status: leftSpot.status,
+              color: leftSpot.color,
               onTap: () {
                 // if (leftSpot.status.toLowerCase() != 'reserved') {
                 //   _showReservationDialog(context, leftSpot.prettyId ?? '');
@@ -89,7 +89,7 @@ class _ParkingGridState extends State<ParkingGrid> {
             rightSpot != null
                 ? ParkingSpotTile(
                     id: rightSpot.prettyId ?? 'Spot ${i + 2}',
-                    status: rightSpot.status,
+                    color: rightSpot.color,
                     onTap: () {
                       // if (rightSpot.status.toLowerCase() != 'reserved') {
                       //   _showReservationDialog(context, rightSpot.prettyId ?? '');
@@ -213,20 +213,6 @@ class _ParkingGridState extends State<ParkingGrid> {
     return widget.availableFloors.indexOf(currentFloor) <
         (widget.availableFloors.length - 1);
   }
-
-  // Funkcja koloru miejsca parkingowego
-MaterialColor _getSpotColor(String status) {
-  switch (status.toLowerCase()) {
-    case 'free':
-      return Colors.green;
-    case 'reserved':
-      return Colors.yellow;
-    case 'occupied':
-      return Colors.red;
-    default:
-      return Colors.grey;
-  }
-}
 
   // Funkcja dialogu rezerwacji
   void _showReservationDialog(BuildContext context, String spotId) {

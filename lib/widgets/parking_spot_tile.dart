@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class ParkingSpotTile extends StatelessWidget {
   final String id;
-  final String status;
+  final String color;
   final VoidCallback onTap;
 
   const ParkingSpotTile({
     Key? key,
     required this.id,
-    required this.status,
+    required this.color,
     required this.onTap,
   }) : super(key: key);
 
@@ -18,14 +18,16 @@ class ParkingSpotTile extends StatelessWidget {
     Color borderColor;
     Widget? icon;
 
-    switch (status.toLowerCase()) {
-      case 'free':
+    switch (color.toLowerCase()) {
+      case 'green':
         borderColor = Colors.green;
         break;
-      case 'reserved':
+      case 'yellow':
         borderColor = Colors.yellow.shade700;
         break;
-      case 'occupied':
+      case 'red':
+      case 'red_blink':
+      case 'blue':
         borderColor = Colors.red;
         icon = Image.asset(
           'assets/images/car.png', // Path to the car image
@@ -38,7 +40,7 @@ class ParkingSpotTile extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: status.toLowerCase() == 'occupied' ? null : onTap,
+      onTap: color.toLowerCase() == 'occupied' ? null : onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6.0),
         padding: const EdgeInsets.all(16.0),

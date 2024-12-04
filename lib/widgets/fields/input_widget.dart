@@ -1,6 +1,9 @@
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:smart_parking/models/parking_spot.dart';
+import 'package:smart_parking/widgets/fields/filterable_dropdown_field.dart';
 
 enum FieldType { text, dropdown, date }
 
@@ -58,56 +61,84 @@ class _InputWidgetState<T> extends State<InputWidget<T>> {
     final theme = Theme.of(context);
 
     final decoration = InputDecoration(
-      hintText: widget.hintText,
-      prefixIcon: Icon(
-        widget.prefixIcon,
-        color: theme.colorScheme.primary,
-      ),
-      suffixIcon: widget.obscureText
-          ? IconButton(
-              icon: Icon(
-                _obscureText ? Icons.visibility_off : Icons.visibility,
-                color: theme.colorScheme.primary.withOpacity(0.7),
-              ),
-              onPressed: _toggleObscureText,
-            )
-          : null,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
+        hintText: widget.hintText,
+        prefixIcon: Icon(
+          widget.prefixIcon,
           color: theme.colorScheme.primary,
         ),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: theme.colorScheme.primary.withOpacity(0.5),
+        suffixIcon: widget.obscureText
+            ? IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility_off : Icons.visibility,
+                  color: theme.colorScheme.primary.withOpacity(0.7),
+                ),
+                onPressed: _toggleObscureText,
+              )
+            : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+          ),
         ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: theme.colorScheme.primary,
-          width: 2.0,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary.withOpacity(0.5),
+          ),
         ),
-      ),
-      filled: true,
-      fillColor:
-          theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceVariant,
-      hintStyle: theme.textTheme.bodyMedium!.copyWith(color: theme.textTheme.bodyMedium!.color!.withOpacity(0.6))
-    );
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+            width: 2.0,
+          ),
+        ),
+        filled: true,
+        fillColor: theme.inputDecorationTheme.fillColor ??
+            theme.colorScheme.surfaceVariant,
+        hintStyle: theme.textTheme.bodyMedium!.copyWith(
+            color: theme.textTheme.bodyMedium!.color!.withOpacity(0.6)));
 
     switch (widget.fieldType) {
       case FieldType.dropdown:
-        return DropdownFieldBlocBuilder<T>(
-          selectFieldBloc: widget.fieldBloc as SelectFieldBloc<T, dynamic>,
-          decoration: decoration,
-          itemBuilder: (context, value) => FieldItem(
-            child: widget.itemBuilder != null
-                ? widget.itemBuilder!(context, value)
-                : Text(value.toString()),
+        return DropdownSearch<T>(
+          items: widget.items ?? [], // Lista elementów
+          itemAsString: (T item) {
+            if (item is ParkingSpot) {
+              return item.prettyId; // Zwróć pole `prettyId` dla ParkingSpot
+            }
+            return item.toString(); // Dla innych typów użyj `toString`
+          },
+          onChanged: (T? selectedItem) {
+            if (selectedItem != null) {
+              // Aktualizacja FieldBloc
+              (widget.fieldBloc as SelectFieldBloc<T, dynamic>)
+                  .updateValue(selectedItem);
+            }
+          },
+          dropdownDecoratorProps: DropDownDecoratorProps(
+            dropdownSearchDecoration: decoration,
           ),
+          popupProps: PopupProps.menu(
+            showSearchBox: true, // Pole wyszukiwania
+            constraints:
+                const BoxConstraints(maxHeight: 300), // Ograniczenie wysokości
+            searchFieldProps: TextFieldProps(
+              decoration: InputDecoration(
+                hintText: 'Search...', // Placeholder w polu wyszukiwania
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          selectedItem: widget.items != null && widget.items!.isNotEmpty
+              ? widget.items!.first
+              : null, // Ustawienie początkowej wartości
         );
+
       case FieldType.date:
         if (widget.firstDate == null || widget.lastDate == null) {
           throw ArgumentError(
@@ -115,13 +146,15 @@ class _InputWidgetState<T> extends State<InputWidget<T>> {
           );
         }
         return DateTimeFieldBlocBuilder(
-          dateTimeFieldBloc: widget.fieldBloc as InputFieldBloc<DateTime, dynamic>,
+          dateTimeFieldBloc:
+              widget.fieldBloc as InputFieldBloc<DateTime, dynamic>,
           format: DateFormat('yyyy-MM-dd'),
           firstDate: widget.firstDate!,
           lastDate: widget.lastDate!,
           initialDate: widget.firstDate!,
           decoration: decoration,
-          textColor: MaterialStateProperty.all(theme.textTheme.bodyMedium!.color),
+          textColor:
+              MaterialStateProperty.all(theme.textTheme.bodyMedium!.color),
         );
       case FieldType.text:
       default:

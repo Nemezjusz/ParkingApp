@@ -86,20 +86,20 @@ class ReservationItem extends StatelessWidget {
         break;
     }
 
-    Color color = _getColorByStatus(reservation.status);
+    final primaryColor = Theme.of(context).primaryColor;
     return Card(
-      color: color.withOpacity(0.9),
+      color: primaryColor.withOpacity(0.9), // Zmieniono na stały kolor
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
       elevation: 6,
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: ListTile(
-        leading: Icon(statusIcon, color: Theme.of(context).textTheme.bodyMedium?.color, size: 30),
+        leading: Icon(statusIcon, color: Colors.white, size: 30), // Ustawiono biały kolor
         title: Text(
           'Spot: ${reservation.prettyId}',
           style: GoogleFonts.poppins(
-            color: Theme.of(context).textTheme.titleLarge?.color ?? Colors.white,
+            color: Colors.white, // Stały kolor
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -109,44 +109,26 @@ class ReservationItem extends StatelessWidget {
             Text(
               'Date: $formattedDate',
               style: GoogleFonts.poppins(
-              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white70,
+                color: Colors.white70, // Stały kolor
               ),
             ),
             if (reservation.reservedBy != null)
               Text(
-              'Reserved By: ${reservation.reservedBy?.replaceAll('BÅaÅ¼ej', 'Błażej')}',
-              style: GoogleFonts.poppins(
-                color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white70,
+                'Reserved By: ${reservation.reservedBy?.replaceAll('BÅaÅ¼ej', 'Błażej')}',
+                style: GoogleFonts.poppins(
+                  color: Colors.white70, // Stały kolor
+                ),
               ),
-              ),
-            Text(
-              'Status: ${reservation.status}',
-              style: GoogleFonts.poppins(
-              color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white70,
-              ),
-            ),
           ],
         ),
         trailing: canCancelHere
             ? IconButton(
-          icon: Icon(Icons.cancel, color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white70, size: 30),
-          onPressed: () => _cancelReservation(context),
+                icon: Icon(Icons.cancel, color: Colors.white70, size: 30), // Stały kolor
+                onPressed: () => _cancelReservation(context),
               )
             : null,
       ),
     );
   }
-
-  Color _getColorByStatus(String status) {
-    switch (status.toLowerCase()) {
-      case 'reserved':
-        return Colors.yellow;
-      case 'occupied':
-        return Colors.red;
-      case 'confirmed':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
 }
+
