@@ -83,7 +83,7 @@ class ReservationForm extends StatelessWidget {
             PrimaryButton(
               text: "Confirm",
               press: reservationFormBloc.submit,
-              textColor: Theme.of(context).textTheme.bodyLarge!.color ?? Colors.black,
+              textColor: Colors.white,
             ),
           ],
         ),
