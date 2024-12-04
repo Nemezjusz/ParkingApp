@@ -54,6 +54,17 @@ class ReservationForm extends StatelessWidget {
                 icon: Icons.book_online, title: 'Reserve a Spot'),
             const SizedBox(height: 16),
 
+            // Date Picker
+            InputWidget<DateTime>(
+              hintText: 'Reservation Date',
+              prefixIcon: Icons.calendar_today,
+              fieldBloc: reservationFormBloc.reservationDate,
+              fieldType: FieldType.date,
+              firstDate: DateTime.now(),
+              lastDate: DateTime.now().add(const Duration(days: 30)),
+            ),
+            const SizedBox(height: 16),
+
             // Parking Spot Selection
             InputWidget<ParkingSpot>(
               hintText: 'Select a Spot',
@@ -65,17 +76,6 @@ class ReservationForm extends StatelessWidget {
                 spot.prettyId ?? 'Unknown Spot',
                 style: const TextStyle(color: Colors.black),
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // Date Picker
-            InputWidget<DateTime>(
-              hintText: 'Reservation Date',
-              prefixIcon: Icons.calendar_today,
-              fieldBloc: reservationFormBloc.reservationDate,
-              fieldType: FieldType.date,
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 30)),
             ),
             const SizedBox(height: 16),
 
