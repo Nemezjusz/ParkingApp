@@ -25,7 +25,7 @@ class PrimaryButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: color ?? Theme.of(context).primaryColor,
         foregroundColor: textColor,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 18), // Increased padding
         shape: RoundedRectangleBorder(
           borderRadius: borderRadius,
         ),
@@ -33,7 +33,7 @@ class PrimaryButton extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 16, color: textColor),
+        style: TextStyle(fontSize: 18, color: textColor), // Increased font size
       ),
     );
   }
